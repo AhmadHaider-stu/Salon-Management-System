@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Add Phone Number</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h4>One last step</h4>
+    </div>
+
+    {% if error %}
+    <div class="error-message">
+        {% if error == "invalid_phone" %}
+        Please enter a valid phone number.
+        {% elif error == "phone_taken" %}
+        This phone number is already registered to another account.
+        {% else %}
+        Something went wrong. Please try again.
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+    <form method="post" action="/login/complete-phone">
+      <div style="margin-bottom: 20px; text-align: left;">
+        <label for="phone" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">
+          Phone Number
+        </label>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          inputmode="numeric"
+          pattern="[0-9+]*"
+          placeholder="+971 50 123 4567"
+          required
+          style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;"
+        />
+      </div>
+      <button type="submit" class="logout-btn" style="width: 100%; background: #4285f4;">
+        Continue
+      </button>
+    </form>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Home Page</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h4>Welcome, {{ user.f_name }} {{ user.l_name }}</h4>
+    </div>
+
+    <div class="user-info">
+      <div class="user-avatar">
+        {% if user.employee and user.employee.photo %}
+          <img src="{{ user.employee.photo }}" alt="Profile photo" class="avatar-img" />
+        {% else %}
+          <img src="{{ url_for('static', path='icons/avatar.png') }}" alt="Default avatar" class="avatar-img" />
+        {% endif %}
+      </div>
+      <div class="user-text">
+        <div class="user-name">{{ user.f_name }}</div>
+        <div class="user-email">{{ user.email }}</div>
+      </div>
+    </div>
+
+    <form method="post" action="/logout">
+      <button type="submit" class="logout-btn" style="width: 100%;">Logout</button>
+    </form>
+  </div>
+</body>
+
+</html>
