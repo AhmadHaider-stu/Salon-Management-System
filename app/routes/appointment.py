@@ -1,9 +1,9 @@
 from fastapi import APIRouter , HTTPException , Depends
 
-from app.schemas.appointment import AppointmentCreate , AppointmentStatus
+from app.schemas.appointment import AppointmentCreate , AppointmentStatus , RescheduleRequest , AddServiceRequest , PriceUpdateRequest
 from app.dependencies import get_db , get_current_user , require_receptionist_or_admin
 
-from app.business.appointment_logic import book_appointment , change_appointment_status , delete_appointment_service , delete_appointment
+from app.business.appointment_logic import book_appointment , change_appointment_status , delete_appointment_service , delete_appointment , reschedule_appointment , add_service_to_appointment , update_appointment_service_price
 from app.business.appointment_logic import get_or_raise as appointment_get_or_raise
 
 from app.CRUD.appointment import get_client_appointment
@@ -142,3 +142,45 @@ def create_walk_in_appointment(data: WalkInBookingCreate, db: dict = Depends(get
         raise HTTPException(status_code=404, detail="Client not found")
 
     return {"appointment": appointment, "client": client}
+
+
+
+@router.put('/{appointmentID}/reschedule', dependencies=[Depends(require_receptionist_or_admin)])
+def reschedule(appointmentID: int, data: RescheduleRequest, db: dict = Depends(get_db)):
+    try:
+        return reschedule_appointment(session=db, appointmentID=appointmentID, new_start_time=data.start_time)
+    except NotFoundAppointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    except CannotModifyAppointment:
+        raise HTTPException(status_code=400, detail="Cannot modify a completed or cancelled appointment")
+    except EmployeeBusy:
+        raise HTTPException(status_code=409, detail="Employee is not available at this time")
+    except DoubleBook:
+        raise HTTPException(status_code=409, detail="Client already has an active appointment")
+
+
+@router.post('/{appointmentID}/services', dependencies=[Depends(require_receptionist_or_admin)])
+def add_service(appointmentID: int, data: AddServiceRequest, db: dict = Depends(get_db)):
+    try:
+        return add_service_to_appointment(session=db, appointmentID=appointmentID,
+                                           employeeID=data.employee_id, serviceID=data.service_id)
+    except NotFoundAppointment:
+        raise HTTPException(status_code=404, detail="Appointment not found")
+    except CannotModifyAppointment:
+        raise HTTPException(status_code=400, detail="Cannot modify a completed or cancelled appointment")
+    except NotFoundService:
+        raise HTTPException(status_code=404, detail="Service not found")
+    except EmployeeNotAssigned:
+        raise HTTPException(status_code=400, detail="Employee not assigned to this service")
+    except EmployeeBusy:
+        raise HTTPException(status_code=409, detail="Employee is not available at this time")
+
+
+@router.put('/appointment_service/{appointmentServiceID}/price', dependencies=[Depends(require_receptionist_or_admin)])
+def edit_price(appointmentServiceID: int, data: PriceUpdateRequest, db: dict = Depends(get_db)):
+    try:
+        return update_appointment_service_price(session=db, appointmentServiceID=appointmentServiceID, new_price=data.price)
+    except NotFoundAppointment:
+        raise HTTPException(status_code=404, detail="Appointment service not found")
+    except CannotModifyAppointment:
+        raise HTTPException(status_code=400, detail="Cannot modify a completed or cancelled appointment")

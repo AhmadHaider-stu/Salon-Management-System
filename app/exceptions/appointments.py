@@ -18,3 +18,7 @@ class NotFoundAppointment(Exception):
     def __init__(self):
         super().__init__('Appointment not found')
 
+class CannotModifyAppointment(Exception):
+    def __init__(self):
+        super().__init__('Cannot change this appointment')
+

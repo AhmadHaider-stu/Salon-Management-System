@@ -12,9 +12,13 @@ class AppointmentCreate(BaseModel):
     note : Optional[str]= Field(max_length=500)
 
 
-# class AppointmentCreate(BaseModel):
-#     phone: str
-#     start_time: datetime
-#     services: list[ServiceSelection]
-#     # note : Optional[str]= Field(max_length=500)
+class RescheduleRequest(BaseModel):
+    start_time: datetime
+
+class AddServiceRequest(BaseModel):
+    employee_id: int
+    service_id: int
+
+class PriceUpdateRequest(BaseModel):
+    price: float
 

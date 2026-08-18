@@ -233,3 +233,102 @@ def change_appointment_status(session, appointmentID, status):
         session.commit()
     elif status == AppointmentStatus.COMPLETED:
         send_completion_email(session=session, appointmentID=appointmentID)
+
+def reschedule_appointment(session, appointmentID, new_start_time):
+    try:
+        status, appointment = get_appointment(session=session, appointmentID=appointmentID)
+        if status == 'FAIL':
+            raise NotFoundAppointment()
+        if appointment.status in (AppointmentStatus.COMPLETED, AppointmentStatus.CANCELLED):
+            raise CannotModifyAppointment()
+
+        services_status, services = get_appointment_service_by_appointment(session=session, appointmentID=appointmentID)
+        if services_status == 'FAIL':
+            raise NotFoundAppointment()
+        services = sorted(services, key=lambda s: s.start_time)
+
+        newStart = new_start_time
+        planned = []
+        for entry in services:
+            service = service_get_or_raise(session=session, serviceID=entry.service_id)
+            end = newStart + timedelta(minutes=service.time_duration)
+            planned.append({"entry": entry, "employee_id": entry.employee_id, "start_time": newStart, "end_time": end})
+            newStart = end + timedelta(minutes=BREAK_MINUTES)
+
+        for item in planned:
+            if not is_employee_free(session=session, employeeID=item["employee_id"],
+                                     start_time=item["start_time"], end_time=item["end_time"],
+                                     exclude_appointment_service_id=appointmentID):
+                raise EmployeeBusy()
+
+        check_client(session=session, clientID=appointment.client_id, exclude=appointmentID)
+
+        for item in planned:
+            item["entry"].start_time = item["start_time"]
+            item["entry"].end_time = item["end_time"]
+
+        appointment.start_time = planned[0]["start_time"]
+        appointment.end_time = planned[-1]["end_time"]
+        session.commit()
+        return appointment
+    except:
+        session.rollback()
+        raise
+
+
+def add_service_to_appointment(session, appointmentID, employeeID, serviceID):
+    try:
+        status, appointment = get_appointment(session=session, appointmentID=appointmentID)
+        if status == 'FAIL':
+            raise NotFoundAppointment()
+        if appointment.status in (AppointmentStatus.COMPLETED, AppointmentStatus.CANCELLED):
+            raise CannotModifyAppointment()
+
+        if not check_employee_service(session=session, employeeID=employeeID, serviceID=serviceID):
+            raise EmployeeNotAssigned()
+
+        service = service_get_or_raise(session=session, serviceID=serviceID)
+
+        services_status, services = get_appointment_service_by_appointment(session=session, appointmentID=appointmentID)
+        if services_status == 'OK' and services:
+            last_end = max(s.end_time for s in services)
+            start_time = last_end + timedelta(minutes=BREAK_MINUTES)
+        else:
+            start_time = appointment.start_time
+        end_time = start_time + timedelta(minutes=service.time_duration)
+
+        if not is_employee_free(session=session, employeeID=employeeID, start_time=start_time,
+                                 end_time=end_time, exclude_appointment_service_id=appointmentID):
+            raise EmployeeBusy()
+
+        new_entry = add_appointment_service(session=session, appointmentID=appointmentID, serviceID=serviceID,
+                                             employeeID=employeeID, price=service.price,
+                                             start_time=start_time, end_time=end_time)
+        appointment.end_time = end_time
+        appointment.total_price = recalculate_total(session=session, appointmentID=appointmentID)
+        session.commit()
+        return new_entry
+    except:
+        session.rollback()
+        raise
+
+
+def update_appointment_service_price(session, appointmentServiceID, new_price):
+    try:
+        status, entry = get_appointment_service(session=session, appointment_serviceID=appointmentServiceID)
+        if status == 'FAIL':
+            raise NotFoundAppointment()
+
+        appt_status, appointment = get_appointment(session=session, appointmentID=entry.appointment_id)
+        if appt_status == 'FAIL':
+            raise NotFoundAppointment()
+        if appointment.status in (AppointmentStatus.COMPLETED, AppointmentStatus.CANCELLED):
+            raise CannotModifyAppointment()
+
+        entry.price = new_price
+        appointment.total_price = recalculate_total(session=session, appointmentID=entry.appointment_id)
+        session.commit()
+        return entry
+    except:
+        session.rollback()
+        raise
