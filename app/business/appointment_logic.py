@@ -332,3 +332,34 @@ def update_appointment_service_price(session, appointmentServiceID, new_price):
     except:
         session.rollback()
         raise
+
+def get_available_slots(session, employee_servicesIDs, date, exclude_appointment_id=None):
+    if not employee_servicesIDs:
+        return []
+
+    first = employee_servicesIDs[0]
+    day_of_week = DayOfWeek(date.strftime('%A').lower())
+    status, schedule = get_schedule_for_day(session=session, employee_id=first.employee_id, day_of_week=day_of_week)
+    if status == 'FAIL':
+        return []
+
+    slots = []
+    day_start = datetime.combine(date, schedule.start_time)
+    day_end = datetime.combine(date, schedule.end_time)
+    step = timedelta(minutes=15)
+
+    candidate = day_start
+    while candidate < day_end:
+        chain = compute_schedule(session=session, employee_servicesIDs=employee_servicesIDs, start_time=candidate)
+        all_free = True
+        for entry in chain:
+            if not is_employee_free(session=session, employeeID=entry["employee_id"],
+                                     start_time=entry["start_time"], end_time=entry["end_time"],
+                                     exclude_appointment_service_id=exclude_appointment_id):
+                all_free = False
+                break
+        if all_free:
+            slots.append(candidate)
+        candidate += step
+
+    return slots

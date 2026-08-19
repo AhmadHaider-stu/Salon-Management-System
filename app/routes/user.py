@@ -26,3 +26,11 @@ def rename(data:RenameUserRequest,db:dict = Depends(get_db),userID : int = Depen
 def all_users(db:dict = Depends(get_db)):
     return crud_all_users(session=db)
 
+@router.post('/update-phone')
+def update_phone_route(data: PhoneUpdateRequest, db: dict = Depends(get_db), userID: int = Depends(get_google_user)):
+    try:
+        return update_phone(session=db, userID=userID, phone=data.phone)
+    except InvalidPhoneNumber:
+        raise HTTPException(status_code=400, detail="Invalid phone number")
+    except UsedPhoneNumber:
+        raise HTTPException(status_code=409, detail="This phone number is already in use")

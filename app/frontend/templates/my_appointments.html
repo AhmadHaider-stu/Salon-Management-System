@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}My appointments · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">My appointments</div>
+
+  <div class="tab-row">
+    <button type="button" class="tab-btn active" data-tab="upcoming">Upcoming</button>
+    <button type="button" class="tab-btn" data-tab="past">Past</button>
+  </div>
+
+  <div id="apptList"></div>
+</div>
+
+<script>
+  var allAppointments = [];
+  var currentTab = 'upcoming';
+  var serviceMap = {};
+  var employeeCache = {};
+
+  function formatPrice(value) {
+    return 'AED ' + Number(value).toFixed(0);
+  }
+
+  function formatDate(iso) {
+    return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function formatTime(iso) {
+    return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function statusBadgeClass(status) {
+    return 'status-badge status-' + status.toLowerCase();
+  }
+
+  async function loadServiceMap() {
+    var res = await fetch('/service/all');
+    var services = await res.json();
+    services.forEach(function (s) { serviceMap[s.id] = s.description; });
+  }
+
+  async function resolveEmployeeName(serviceId, employeeId) {
+    if (!employeeCache[serviceId]) {
+      var res = await fetch('/service/' + serviceId + '/employees');
+      employeeCache[serviceId] = await res.json();
+    }
+    var match = employeeCache[serviceId].find(function (e) { return e.id === employeeId; });
+    return match ? (match.f_name + ' ' + match.l_name) : 'Stylist';
+  }
+
+  async function loadAppointments() {
+    var res = await fetch('/appointment/my');
+    allAppointments = await res.json();
+    render();
+  }
+
+  function render() {
+    var now = new Date();
+    var filtered = allAppointments.filter(function (a) {
+      var start = new Date(a.start_time);
+      return currentTab === 'upcoming' ? start >= now : start < now;
+    });
+    filtered.sort(function (a, b) {
+      var da = new Date(a.start_time), db = new Date(b.start_time);
+      return currentTab === 'upcoming' ? da - db : db - da;
+    });
+
+    var list = document.getElementById('apptList');
+    list.innerHTML = '';
+
+    if (filtered.length === 0) {
+      var empty = document.createElement('div');
+      empty.className = 'empty-state';
+      empty.innerHTML = currentTab === 'upcoming'
+        ? 'No upcoming appointments.<br><a href="/book">Book one</a>'
+        : 'No past appointments yet.';
+      list.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach(function (a) {
+      list.appendChild(buildCard(a));
+    });
+  }
+
+  function buildCard(appointment) {
+    var card = document.createElement('div');
+    card.className = 'cal-card clickable';
+    card.innerHTML =
+      '<div class="cal-card-top">' +
+        '<div>' +
+          '<div class="cal-card-time">' + formatDate(appointment.start_time) + '</div>' +
+          '<div class="cal-card-sub">' + formatTime(appointment.start_time) + ' – ' + formatTime(appointment.end_time) + '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<span class="' + statusBadgeClass(appointment.status) + '">' + appointment.status + '</span>' +
+          '<svg class="cal-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cal-card-price" style="margin-top:6px;">' + formatPrice(appointment.total_price) + '</div>' +
+      '<div class="appt-detail"></div>';
+
+    var loaded = false;
+    var detail = card.querySelector('.appt-detail');
+
+    card.addEventListener('click', async function () {
+      var isOpen = card.classList.toggle('open');
+      detail.classList.toggle('open', isOpen);
+      if (isOpen && !loaded) {
+        loaded = true;
+        detail.innerHTML = '<div class="cal-card-sub">Loading…</div>';
+        var res = await fetch('/appointment/' + appointment.id);
+        var data = await res.json();
+
+        var linesHtml = '';
+        for (var i = 0; i < data.services.length; i++) {
+          var s = data.services[i];
+          var employeeName = await resolveEmployeeName(s.service_id, s.employee_id);
+          linesHtml +=
+            '<div class="appt-service-line">' +
+              '<div>' +
+                '<div class="appt-service-name">' + (serviceMap[s.service_id] || 'Service') + '</div>' +
+                '<div class="appt-service-sub">with ' + employeeName + ' · ' + formatTime(s.start_time) + '</div>' +
+              '</div>' +
+              '<div class="cart-item-price">' + formatPrice(s.price) + '</div>' +
+            '</div>';
+        }
+
+        var noteHtml = appointment.note ? '<div class="appt-note">"' + appointment.note + '"</div>' : '';
+        detail.innerHTML = linesHtml + noteHtml;
+      }
+    });
+
+    return card;
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      currentTab = btn.getAttribute('data-tab');
+      render();
+    });
+  });
+
+  (async function init() {
+    await loadServiceMap();
+    await loadAppointments();
+  })();
+</script>
+{% endblock %}

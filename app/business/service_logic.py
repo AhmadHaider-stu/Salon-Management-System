@@ -84,10 +84,10 @@ def alter_service(session , serviceID , data):
         for field, value in data.model_dump(exclude_unset = True).items():
             if (field == 'description'):
                 value = value.upper()
-            setattr(service[1],field,value)
+            setattr(service,field,value)
         session.commit()
-        session.refresh(service[1])
-        return service[1]
+        session.refresh(service)
+        return service
     except:
         session.rollback()
         raise

@@ -2,49 +2,51 @@
 <html>
 
 <head>
-  <title>Add Phone Number</title>
+  <title>Add your phone number</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
 </head>
 
 <body>
-  <div class="container">
-    <div class="header">
-      <h4>One last step</h4>
-    </div>
+  <div class="screen">
+    <div class="auth-card">
+      <div class="brand-mark">Hair Lounge Salon</div>
+      <div class="brand-sub"></div>
 
-    {% if error %}
-    <div class="error-message">
+      {% if error %}
+      <div class="error-banner">
         {% if error == "invalid_phone" %}
-        Please enter a valid phone number.
+          That doesn't look like a valid phone number. Check the digits and try again.
         {% elif error == "phone_taken" %}
-        This phone number is already registered to another account.
+          That phone number is already linked to another account.
         {% else %}
-        Something went wrong. Please try again.
+          Something went wrong. Try again.
         {% endif %}
-
-    </div>
-    {% endif %}
-
-    <form method="post" action="/login/complete-phone">
-      <div style="margin-bottom: 20px; text-align: left;">
-        <label for="phone" style="display: block; margin-bottom: 8px; color: #333; font-weight: 500;">
-          Phone Number
-        </label>
-        <input
-          type="tel"
-          id="phone"
-          name="phone"
-          inputmode="numeric"
-          pattern="[0-9+]*"
-          placeholder="+971 50 123 4567"
-          required
-          style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px;"
-        />
       </div>
-      <button type="submit" class="logout-btn" style="width: 100%; background: #4285f4;">
-        Continue
-      </button>
-    </form>
+      {% endif %}
+
+      <div class="auth-headline">One last step</div>
+      <div class="auth-body">Add your phone number so the salon can reach you about your bookings.</div>
+
+      <form method="post" action="/login/complete-phone">
+        <div class="field-group">
+          <label class="field-label" for="phone">Phone number</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            inputmode="numeric"
+            pattern="[0-9+]*"
+            placeholder="+971 50 123 4567"
+            class="field-input"
+            required
+            autofocus
+          />
+          <div class="field-hint">Used only for appointment updates.</div>
+        </div>
+        <button type="submit" class="btn btn-primary">Continue</button>
+      </form>
+    </div>
   </div>
 </body>
 

@@ -30,7 +30,7 @@ router = APIRouter(prefix='/employee' ,tags=['employee'])
 def get_all_employees(db : dict = Depends(get_db)):
     return get_employees(session=db)
 
-@router.get('/{employee_id}',dependencies=[Depends(require_receptionist_or_admin)] , summary='Get specific employee' ,  response_model=EmployeeResponse)
+@router.get('/{employeeID}',dependencies=[Depends(require_self_receptionist_or_admin)] , summary='Get specific employee' ,  response_model=EmployeeResponse)
 def get_employee(employeeID:int,db:dict = Depends(get_db)):
     status, employee = crud_get_employee(session = db,employeeID=employeeID)
     if (status == 'FAIL'):

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Services · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">Services</div>
+  <div class="page-sub">Add, edit, or retire services offered.</div>
+
+  <div id="pageError" style="display:none;" class="error-banner"></div>
+
+  <button type="button" class="btn btn-outline" id="addToggleBtn" style="margin-bottom: 20px;">+ Add service</button>
+
+  <div class="employee-picker" id="addPanel">
+    <div class="field-group">
+      <label class="field-label">Category</label>
+      <select id="newCategory" class="field-input" style="font-family: var(--font-body);"></select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Description</label>
+      <input type="text" id="newDescription" class="field-input" style="font-family: var(--font-body);" maxlength="30" />
+    </div>
+    <div class="field-group">
+      <label class="field-label">Price (AED)</label>
+      <input type="number" id="newPrice" class="field-input" style="font-family: var(--font-body);" min="10" max="500" />
+    </div>
+    <div class="field-group">
+      <label class="field-label">Duration (minutes)</label>
+      <input type="number" id="newDuration" class="field-input" style="font-family: var(--font-body);" min="10" max="180" />
+    </div>
+    <button type="button" class="confirm-add-btn" id="addSaveBtn">Create service</button>
+  </div>
+
+  <div id="servicesList" style="margin-top: 20px;"></div>
+</div>
+
+<script>
+  var CATEGORIES = [
+    { value: 'hair styling', label: 'Hair styling' },
+    { value: 'nails', label: 'Nails' },
+    { value: 'makeup', label: 'Makeup' },
+    { value: 'Threading and waxing', label: 'Threading and waxing' }
+  ];
+
+  function categoryOptionsHtml(selected) {
+    return CATEGORIES.map(function (c) {
+      return '<option value="' + c.value + '"' + (c.value === selected ? ' selected' : '') + '>' + c.label + '</option>';
+    }).join('');
+  }
+
+  function categoryLabel(value) {
+    var match = CATEGORIES.find(function (c) { return c.value === value; });
+    return match ? match.label : value;
+  }
+
+  function formatPrice(value) {
+    return 'AED ' + Number(value).toFixed(0);
+  }
+
+  function showError(message) {
+    var el = document.getElementById('pageError');
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+
+  function clearError() {
+    document.getElementById('pageError').style.display = 'none';
+  }
+
+  document.getElementById('newCategory').innerHTML = categoryOptionsHtml(null);
+
+  document.getElementById('addToggleBtn').addEventListener('click', function () {
+    document.getElementById('addPanel').classList.toggle('open');
+  });
+
+  document.getElementById('addSaveBtn').addEventListener('click', async function () {
+    clearError();
+    var payload = {
+      category: document.getElementById('newCategory').value,
+      description: document.getElementById('newDescription').value,
+      price: parseFloat(document.getElementById('newPrice').value),
+      time_duration: parseInt(document.getElementById('newDuration').value, 10)
+    };
+
+    var res = await fetch('/service/add_service', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      document.getElementById('newDescription').value = '';
+      document.getElementById('newPrice').value = '';
+      document.getElementById('newDuration').value = '';
+      document.getElementById('addPanel').classList.remove('open');
+      loadServices();
+    } else {
+      var data = await res.json();
+      showError(data.detail || 'Could not create service.');
+    }
+  });
+
+  async function loadServices() {
+    var res = await fetch('/service/all');
+    var services = await res.json();
+
+    var byCategory = {};
+    services.forEach(function (s) {
+      if (!byCategory[s.category]) byCategory[s.category] = [];
+      byCategory[s.category].push(s);
+    });
+
+    var container = document.getElementById('servicesList');
+    container.innerHTML = '';
+
+    Object.keys(byCategory).forEach(function (category) {
+      var title = document.createElement('div');
+      title.className = 'category-title';
+      title.textContent = categoryLabel(category);
+      container.appendChild(title);
+
+      byCategory[category].forEach(function (service) {
+        container.appendChild(buildServiceRow(service));
+      });
+    });
+  }
+
+  function buildServiceRow(service) {
+    var row = document.createElement('div');
+    row.className = 'service-row' + (service.active ? '' : ' inactive');
+    row.innerHTML =
+      '<div class="service-row-main">' +
+        '<div>' +
+          '<div class="service-name">' + service.description + '</div>' +
+          '<div class="service-meta">' + service.time_duration + ' min · ' +
+            '<span class="status-badge ' + (service.active ? 'status-active' : 'status-inactive') + '">' +
+              (service.active ? 'Active' : 'Inactive') +
+            '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:12px;">' +
+          '<div class="service-price">' + formatPrice(service.price) + '</div>' +
+          '<button class="add-btn" type="button" aria-label="Edit">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+          '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="employee-picker">' +
+        '<div class="field-group">' +
+          '<label class="field-label">Category</label>' +
+          '<select class="field-input edit-category" style="font-family: var(--font-body);">' + categoryOptionsHtml(service.category) + '</select>' +
+        '</div>' +
+        '<div class="field-group">' +
+          '<label class="field-label">Description</label>' +
+          '<input type="text" class="field-input edit-description" style="font-family: var(--font-body);" value="' + service.description + '" maxlength="30" />' +
+        '</div>' +
+        '<div class="field-group">' +
+          '<label class="field-label">Price (AED)</label>' +
+          '<input type="number" class="field-input edit-price" style="font-family: var(--font-body);" value="' + service.price + '" min="10" max="500" />' +
+        '</div>' +
+        '<div class="field-group">' +
+          '<label class="field-label">Duration (minutes)</label>' +
+          '<input type="number" class="field-input edit-duration" style="font-family: var(--font-body);" value="' + service.time_duration + '" min="10" max="180" />' +
+        '</div>' +
+        '<div class="field-group" style="display:flex;align-items:center;gap:8px;">' +
+          '<input type="checkbox" class="edit-active" id="active-' + service.id + '" ' + (service.active ? 'checked' : '') + ' />' +
+          '<label for="active-' + service.id + '" style="font-size:13px;">Active</label>' +
+        '</div>' +
+        '<button type="button" class="confirm-add-btn edit-save-btn">Save changes</button>' +
+        '<button type="button" class="delete-btn-full edit-delete-btn">Delete service</button>' +
+      '</div>';
+
+    var editBtn = row.querySelector('.add-btn');
+    var panel = row.querySelector('.employee-picker');
+    editBtn.addEventListener('click', function () {
+      panel.classList.toggle('open');
+    });
+
+    row.querySelector('.edit-save-btn').addEventListener('click', async function () {
+      clearError();
+      var payload = {
+        category: row.querySelector('.edit-category').value,
+        description: row.querySelector('.edit-description').value,
+        price: parseFloat(row.querySelector('.edit-price').value),
+        time_duration: parseInt(row.querySelector('.edit-duration').value, 10),
+        active: row.querySelector('.edit-active').checked
+      };
+      var res = await fetch('/service/' + service.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        loadServices();
+      } else {
+        var data = await res.json();
+        showError(data.detail || 'Could not save changes.');
+      }
+    });
+
+    row.querySelector('.edit-delete-btn').addEventListener('click', async function () {
+      if (!confirm('Delete this service? This cannot be undone.')) return;
+      clearError();
+      var res = await fetch('/service/' + service.id, { method: 'DELETE' });
+      if (res.ok) {
+        loadServices();
+      } else {
+        var data = await res.json();
+        showError(data.detail || 'Could not delete this service.');
+      }
+    });
+
+    return row;
+  }
+
+  loadServices();
+</script>
+{% endblock %}

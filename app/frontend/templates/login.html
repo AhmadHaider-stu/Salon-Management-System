@@ -1,28 +1,37 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Login - Salon App</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h4>FastAPI with Google OAuth</h4>
-        <div class="img-box">
-          <img class="img" src="{{ url_for('static', path='icons/avatar.png') }}" />
-        </div>
-      </div>
-      
+
+<head>
+  <title>Sign in</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
+</head>
+
+<body>
+  <div class="screen">
+    <div class="auth-card">
+      <div class="brand-mark">Hair Lounge Salon</div>
+      <div class="brand-sub"></div>
+
       {% if error %}
-      <div class="error-message" style="color: red; text-align: center; margin: 10px 0;">
-        {{ error }}
+      <div class="error-banner">
+        {% if error == "blocked" %}
+          Your account has been blocked. Contact the salon for help.
+        {% else %}
+          Something went wrong signing you in. Try again.
+        {% endif %}
       </div>
       {% endif %}
-      
-      <a href="/login" class="google-btn">
-        <div class="google-icon"></div>
-        <span class="btn-text">Sign in with Google</span>
+
+      <div class="auth-headline">Welcome</div>
+      <div class="auth-body">Sign in to book an appointment or manage your visits.</div>
+
+      <a href="/login" class="btn btn-google">
+        <span class="google-icon"></span>
+        Continue with Google
       </a>
     </div>
-  </body>
+  </div>
+</body>
+
 </html>

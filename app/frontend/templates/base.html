@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>{% block title %}Hair Lounge{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
+</head>
+
+<body>
+  {% from "_icons.html" import icon %}
+
+  <form method="post" action="/logout" style="display:contents;">
+    <button type="submit" class="logout-fixed-btn" aria-label="Log out">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  </form>
+
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+
+  <div class="app-body">
+    {% block content %}{% endblock %}
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="{{ brand_href | default('/home') }}" class="nav-brand">Hair Lounge</a>
+    {% for link in nav_links | default([]) %}
+    <a href="{{ link.href }}" class="nav-item {% if active_page == link.key %}active{% endif %}">
+      {{ icon(link.icon) }}
+      <span>{{ link.label }}</span>
+    </a>
+    {% endfor %}
+  </nav>
+
+  <script>
+    var navToggle = document.getElementById('navToggle');
+    var isDesktop = window.matchMedia('(min-width: 768px)');
+
+    navToggle.addEventListener('click', function () {
+      if (isDesktop.matches) {
+        document.body.classList.toggle('nav-collapsed');
+      } else {
+        document.body.classList.toggle('nav-hidden');
+      }
+    });
+  </script>
+</body>
+
+</html>

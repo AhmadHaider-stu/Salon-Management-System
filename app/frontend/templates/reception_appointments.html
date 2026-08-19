@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Appointments · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">Appointments</div>
+  <div class="page-sub">All bookings for the selected day.</div>
+
+  <div id="pageError" style="display:none;" class="error-banner"></div>
+
+  <div class="date-field" style="margin-bottom: 20px;">
+    <input type="date" id="apptDate" class="field-input" style="font-family: var(--font-body); max-width: 220px;" />
+  </div>
+
+  <div id="apptList"></div>
+</div>
+
+<script>
+  var serviceMap = {};
+  var employeeCache = {};
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function formatTime(iso) {
+    return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
+  function formatPrice(value) {
+    return 'AED ' + Number(value).toFixed(0);
+  }
+  function showError(message) {
+    var el = document.getElementById('pageError');
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+  function clearError() {
+    document.getElementById('pageError').style.display = 'none';
+  }
+
+  async function loadServiceMap() {
+    var res = await fetch('/service/all');
+    var services = await res.json();
+    services.forEach(function (s) { serviceMap[s.id] = s.description; });
+  }
+
+  async function resolveEmployeeName(serviceId, employeeId) {
+    if (!employeeCache[serviceId]) {
+      var res = await fetch('/service/' + serviceId + '/employees');
+      employeeCache[serviceId] = await res.json();
+    }
+    var match = employeeCache[serviceId].find(function (e) { return e.id === employeeId; });
+    return match ? (match.f_name + ' ' + match.l_name) : 'Stylist';
+  }
+
+  async function changeStatus(appointmentId, newStatus) {
+    clearError();
+    var res = await fetch('/appointment/' + appointmentId + '/status?status=' + newStatus, { method: 'PUT' });
+    if (res.ok) {
+      loadAppointments();
+    } else {
+      var data = await res.json();
+      showError(data.detail || 'Could not change status.');
+    }
+  }
+
+  function statusSelect(appointmentId, current) {
+    var statuses = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'];
+    var select = document.createElement('select');
+    select.className = 'status-select';
+    statuses.forEach(function (s) {
+      var opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+      if (s === current.toLowerCase()) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener('click', function (e) { e.stopPropagation(); });
+    select.addEventListener('change', function () {
+      changeStatus(appointmentId, select.value);
+    });
+    return select;
+  }
+
+  async function loadAppointments() {
+    clearError();
+    var date = document.getElementById('apptDate').value;
+    var res = await fetch('/calendar/day?date=' + date);
+    var appointments = await res.json();
+
+    var list = document.getElementById('apptList');
+    list.innerHTML = '';
+
+    if (appointments.length === 0) {
+      list.innerHTML = '<div class="cart-empty">No appointments this day</div>';
+      return;
+    }
+
+    appointments.sort(function (a, b) { return new Date(a.start_time) - new Date(b.start_time); });
+    appointments.forEach(function (appt) {
+      list.appendChild(buildCard(appt));
+    });
+  }
+
+  function buildCard(appt) {
+    var card = document.createElement('div');
+    card.className = 'cal-card clickable';
+    card.innerHTML =
+      '<div class="cal-card-top">' +
+        '<div>' +
+          '<div class="cal-card-time">' + formatTime(appt.start_time) + ' – ' + formatTime(appt.end_time) + '</div>' +
+          '<div class="cal-card-sub">' + (appt.phone || 'No phone on file') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;" class="status-cell"></div>' +
+      '</div>' +
+      '<div class="cal-card-price" style="margin-top:6px;">' + formatPrice(appt.total_price) + '</div>' +
+      '<div class="appt-detail">' +
+        '<div class="reschedule-panel">' +
+          '<div class="section-title" style="margin-bottom:0;">Reschedule</div>' +
+          '<input type="date" class="field-input reschedule-date" style="font-family: var(--font-body); max-width: 180px;" />' +
+          '<div class="slots-grid reschedule-slots"></div>' +
+          '<button type="button" class="small-save-btn reschedule-save-btn" style="align-self:flex-start;" disabled>Save new time</button>' +
+        '</div>' +
+        '<div id="services-' + appt.id + '"></div>' +
+      '</div>';
+
+    var statusCell = card.querySelector('.status-cell');
+    statusCell.appendChild(statusSelect(appt.id, appt.status));
+    var chevron = document.createElement('svg');
+    chevron.setAttribute('class', 'cal-card-chevron');
+    chevron.setAttribute('width', '16');
+    chevron.setAttribute('height', '16');
+    chevron.setAttribute('viewBox', '0 0 24 24');
+    chevron.setAttribute('fill', 'none');
+    chevron.setAttribute('stroke', 'currentColor');
+    chevron.setAttribute('stroke-width', '2');
+    chevron.setAttribute('stroke-linecap', 'round');
+    chevron.setAttribute('stroke-linejoin', 'round');
+    chevron.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
+    statusCell.appendChild(chevron);
+
+    var detail = card.querySelector('.appt-detail');
+    var loaded = false;
+    var selectedRescheduleSlot = null;
+    var appointmentServices = [];
+
+    card.addEventListener('click', async function () {
+      var isOpen = card.classList.toggle('open');
+      detail.classList.toggle('open', isOpen);
+      if (isOpen && !loaded) {
+        loaded = true;
+        appointmentServices = await loadServicesForAppointment(appt.id, detail);
+      }
+    });
+
+    var dateInput = detail.querySelector('.reschedule-date');
+    var slotsGrid = detail.querySelector('.reschedule-slots');
+    var saveBtn = detail.querySelector('.reschedule-save-btn');
+
+    dateInput.addEventListener('click', function (e) { e.stopPropagation(); });
+    dateInput.addEventListener('change', async function (e) {
+      e.stopPropagation();
+      selectedRescheduleSlot = null;
+      saveBtn.disabled = true;
+      slotsGrid.innerHTML = '';
+
+      if (!appointmentServices.length) return;
+
+      var payload = {
+        services: appointmentServices.map(function (s) { return { employee_id: s.employee_id, service_id: s.service_id }; }),
+        date: dateInput.value,
+        exclude_appointment_id: appt.id
+      };
+
+      var res = await fetch('/appointment/availability', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      var data = await res.json();
+
+      if (!data.slots || data.slots.length === 0) {
+        slotsGrid.innerHTML = '<div class="slots-empty">No times available this day.</div>';
+        return;
+      }
+
+      data.slots.forEach(function (iso) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'slot-btn';
+        btn.textContent = formatTime(iso);
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          slotsGrid.querySelectorAll('.slot-btn').forEach(function (b) { b.classList.remove('selected'); });
+          btn.classList.add('selected');
+          selectedRescheduleSlot = iso;
+          saveBtn.disabled = false;
+        });
+        slotsGrid.appendChild(btn);
+      });
+    });
+
+    saveBtn.addEventListener('click', async function (e) {
+      e.stopPropagation();
+      if (!selectedRescheduleSlot) return;
+      clearError();
+
+      var res = await fetch('/appointment/' + appt.id + '/reschedule', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ start_time: selectedRescheduleSlot })
+      });
+
+      if (res.ok) {
+        loadAppointments();
+      } else {
+        var data = await res.json();
+        showError(data.detail || 'Could not reschedule this appointment.');
+      }
+    });
+
+    return card;
+  }
+
+  async function loadServicesForAppointment(appointmentId, detail) {
+    var container = detail.querySelector('#services-' + appointmentId);
+    container.innerHTML = '<div class="cal-card-sub">Loading…</div>';
+
+    var res = await fetch('/appointment/' + appointmentId);
+    var data = await res.json();
+
+    var html = '';
+    for (var i = 0; i < data.services.length; i++) {
+      var s = data.services[i];
+      var employeeName = await resolveEmployeeName(s.service_id, s.employee_id);
+      html +=
+        '<div class="appt-detail-service">' +
+          '<div>' +
+            '<div class="appt-service-name">' + (serviceMap[s.service_id] || 'Service') + '</div>' +
+            '<div class="appt-service-sub">with ' + employeeName + ' · ' + formatTime(s.start_time) + '</div>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;">' +
+            '<input type="number" class="reprice-input" value="' + s.price + '" data-id="' + s.id + '" min="0" />' +
+            '<button type="button" class="small-save-btn reprice-save-btn" data-id="' + s.id + '">Save</button>' +
+          '</div>' +
+        '</div>';
+    }
+    container.innerHTML = html;
+
+    container.querySelectorAll('input').forEach(function (input) {
+      input.addEventListener('click', function (e) { e.stopPropagation(); });
+    });
+
+    container.querySelectorAll('.reprice-save-btn').forEach(function (btn) {
+      btn.addEventListener('click', async function (e) {
+        e.stopPropagation();
+        clearError();
+        var id = btn.getAttribute('data-id');
+        var input = container.querySelector('.reprice-input[data-id="' + id + '"]');
+        var res = await fetch('/appointment/appointment_service/' + id + '/price', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ price: parseFloat(input.value) })
+        });
+        if (res.ok) {
+          loadAppointments();
+        } else {
+          var data = await res.json();
+          showError(data.detail || 'Could not update price.');
+        }
+      });
+    });
+
+    return data.services;
+  }
+
+  document.getElementById('apptDate').addEventListener('change', loadAppointments);
+  document.getElementById('apptDate').value = todayStr();
+
+  (async function init() {
+    await loadServiceMap();
+    await loadAppointments();
+  })();
+</script>
+{% endblock %}

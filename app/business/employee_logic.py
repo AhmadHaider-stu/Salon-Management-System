@@ -49,7 +49,9 @@ def get_or_raise(session, employeeID):
 
 def update_employee_photo_upload(session, employeeID, file):
     try:
-        employee = get_or_raise(session=session, employeeID=employeeID)
+        status, employee = get_employee(session=session, employeeID=employeeID)
+        if status == 'FAIL':
+            raise NotFoundEmployee()
         photo_url = cloudinary_upload(file.file, folder="employee_photos")
         update_employee_photo(session=session, employee=employee, value=photo_url)
         session.commit()

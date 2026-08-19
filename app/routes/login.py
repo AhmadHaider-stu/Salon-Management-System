@@ -5,6 +5,7 @@ from starlette.responses import RedirectResponse
 from app.auth.google import oauth
 from app.business.login_logic import *
 from app.dependencies import get_db
+from app.frontend.role_routing import get_role_home
 
 
 router = APIRouter(prefix='/login', tags=['auth'])
@@ -36,7 +37,7 @@ async def auth(request: Request, db: dict = Depends(get_db)):
         except IsBlocked:
             return templates.TemplateResponse(request=request, name='login.html', context={'error': 'blocked'})
         request.session['user_id'] = current_user.id
-        return RedirectResponse("/home", status_code=303)
+        return RedirectResponse(get_role_home(current_user.role), status_code=303)
 
     request.session['pending_registration'] = {
         'f_name': google_user.get('given_name'),
@@ -70,4 +71,4 @@ async def complete_phone_submit(request: Request, phone: str = Form(...), db: di
 
     del request.session['pending_registration']
     request.session['user_id'] = user.id
-    return RedirectResponse("/home", status_code=303)
+    return RedirectResponse(get_role_home(user.role), status_code=303)

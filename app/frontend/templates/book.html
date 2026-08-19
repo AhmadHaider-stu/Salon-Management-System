@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Book · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">Book an appointment</div>
+  <div class="page-sub">Add services, pick who you want, then choose a time.</div>
+
+  <div id="servicesList"></div>
+
+  <div class="section-title" style="margin-top: 32px;">Your cart</div>
+  <div id="cartList">
+    <div class="cart-empty">No services added yet</div>
+  </div>
+
+  <div class="date-field">
+    <div class="section-title">Choose date</div>
+    <input type="date" id="dateInput" class="field-input" style="font-family: var(--font-body);" />
+  </div>
+
+  <div class="date-field" id="slotsSection" style="display:none;">
+    <div class="section-title">Available times</div>
+    <div id="slotsGrid" class="slots-grid"></div>
+  </div>
+
+  <div class="date-field">
+    <div class="section-title">Note (optional)</div>
+    <textarea id="noteField" class="field-input" style="font-family: var(--font-body); min-height: 80px; resize: vertical;" placeholder="Anything the salon should know?" maxlength="500"></textarea>
+  </div>
+
+  <div id="bookingError" style="display:none;" class="error-banner" style="margin-top: 16px;"></div>
+</div>
+
+<div class="cart-bar" id="cartBar">
+  <div>
+    <div class="cart-bar-info" id="cartBarCount">0 services</div>
+    <div class="cart-bar-total" id="cartBarTotal">AED 0</div>
+  </div>
+  <button id="confirmBookingBtn">Book appointment</button>
+</div>
+
+<script>
+  var cart = [];
+  var selectedSlot = null;
+
+  function formatPrice(value) {
+    return 'AED ' + Number(value).toFixed(0);
+  }
+
+  function formatTime(iso) {
+    return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderCategoryLabel(category) {
+    return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+  }
+
+  async function loadServices() {
+    var res = await fetch('/service/all');
+    var services = await res.json();
+
+    var byCategory = {};
+    services.forEach(function (s) {
+      if (!s.active) return;
+      if (!byCategory[s.category]) byCategory[s.category] = [];
+      byCategory[s.category].push(s);
+    });
+
+    var container = document.getElementById('servicesList');
+    container.innerHTML = '';
+
+    Object.keys(byCategory).forEach(function (category) {
+      var title = document.createElement('div');
+      title.className = 'category-title';
+      title.textContent = renderCategoryLabel(category);
+      container.appendChild(title);
+
+      byCategory[category].forEach(function (service) {
+        container.appendChild(buildServiceRow(service));
+      });
+    });
+  }
+
+  function buildServiceRow(service) {
+    var row = document.createElement('div');
+    row.className = 'service-row';
+    row.innerHTML =
+      '<div class="service-row-main">' +
+        '<div>' +
+          '<div class="service-name">' + service.description + '</div>' +
+          '<div class="service-meta">' + service.time_duration + ' min</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:12px;">' +
+          '<div class="service-price">' + formatPrice(service.price) + '</div>' +
+          '<button class="add-btn" type="button" aria-label="Add">+</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="employee-picker">' +
+        '<select><option value="">Loading stylists...</option></select>' +
+        '<button type="button" class="confirm-add-btn">Add to cart</button>' +
+      '</div>';
+
+    var addBtn = row.querySelector('.add-btn');
+    var picker = row.querySelector('.employee-picker');
+    var select = row.querySelector('select');
+    var confirmBtn = row.querySelector('.confirm-add-btn');
+    var loaded = false;
+
+    addBtn.addEventListener('click', async function () {
+      picker.classList.toggle('open');
+      if (picker.classList.contains('open') && !loaded) {
+        loaded = true;
+        var res = await fetch('/service/' + service.id + '/employees');
+        var employees = await res.json();
+        if (employees.length === 0) {
+          select.innerHTML = '<option value="">No stylist available</option>';
+        } else {
+          select.innerHTML = employees.map(function (e) {
+            return '<option value="' + e.id + '">' + e.f_name + ' ' + e.l_name + '</option>';
+          }).join('');
+        }
+      }
+    });
+
+    confirmBtn.addEventListener('click', function () {
+      var employeeId = select.value;
+      if (!employeeId) return;
+      var employeeName = select.options[select.selectedIndex].textContent;
+      cart.push({
+        service_id: service.id,
+        employee_id: parseInt(employeeId, 10),
+        name: service.description,
+        employee_name: employeeName,
+        price: service.price
+      });
+      picker.classList.remove('open');
+      renderCart();
+    });
+
+    return row;
+  }
+
+  function renderCart() {
+    var list = document.getElementById('cartList');
+    var bar = document.getElementById('cartBar');
+
+    if (cart.length === 0) {
+      list.innerHTML = '<div class="cart-empty">No services added yet</div>';
+      bar.classList.remove('visible');
+      document.getElementById('slotsSection').style.display = 'none';
+      return;
+    }
+
+    list.innerHTML = '';
+    var total = 0;
+    cart.forEach(function (item, index) {
+      total += Number(item.price);
+      var el = document.createElement('div');
+      el.className = 'cart-item';
+      el.innerHTML =
+        '<div>' +
+          '<div class="cart-item-name">' + item.name + '</div>' +
+          '<div class="cart-item-sub">with ' + item.employee_name + '</div>' +
+        '</div>' +
+        '<div class="cart-item-right">' +
+          '<div class="cart-item-price">' + formatPrice(item.price) + '</div>' +
+          '<button class="remove-btn" type="button" aria-label="Remove" data-index="' + index + '">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+          '</button>' +
+        '</div>';
+      list.appendChild(el);
+    });
+
+    document.getElementById('cartBarCount').textContent = cart.length + (cart.length === 1 ? ' service' : ' services');
+    document.getElementById('cartBarTotal').textContent = formatPrice(total);
+    bar.classList.add('visible');
+
+    list.querySelectorAll('.remove-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        cart.splice(parseInt(btn.getAttribute('data-index'), 10), 1);
+        renderCart();
+      });
+    });
+
+    if (document.getElementById('dateInput').value) {
+      refreshSlots();
+    }
+  }
+
+  async function refreshSlots() {
+    var dateVal = document.getElementById('dateInput').value;
+    var slotsSection = document.getElementById('slotsSection');
+    var grid = document.getElementById('slotsGrid');
+    selectedSlot = null;
+
+    if (!dateVal || cart.length === 0) {
+      slotsSection.style.display = 'none';
+      return;
+    }
+
+    var payload = {
+      services: cart.map(function (item) {
+        return { employee_id: item.employee_id, service_id: item.service_id };
+      }),
+      date: dateVal
+    };
+
+    var res = await fetch('/appointment/availability', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    var data = await res.json();
+
+    slotsSection.style.display = 'block';
+    grid.innerHTML = '';
+
+    if (!data.slots || data.slots.length === 0) {
+      grid.innerHTML = '<div class="slots-empty">No times available this day. Try another date.</div>';
+      return;
+    }
+
+    data.slots.forEach(function (iso) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slot-btn';
+      btn.textContent = formatTime(iso);
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.slot-btn').forEach(function (b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        selectedSlot = iso;
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  document.getElementById('dateInput').addEventListener('change', refreshSlots);
+
+  function showError(message) {
+    var el = document.getElementById('bookingError');
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+
+  document.getElementById('confirmBookingBtn').addEventListener('click', async function () {
+    var errorEl = document.getElementById('bookingError');
+    errorEl.style.display = 'none';
+
+    if (cart.length === 0) {
+      showError('Add at least one service first.');
+      return;
+    }
+    if (!selectedSlot) {
+      showError('Choose an available time.');
+      return;
+    }
+
+    var payload = {
+      services: cart.map(function (item) {
+        return { employee_id: item.employee_id, service_id: item.service_id };
+      }),
+      start_time: selectedSlot,
+      note: document.getElementById('noteField').value || null
+    };
+
+    var res = await fetch('/appointment/book', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      window.location.href = '/my-appointments';
+    } else {
+      var data = await res.json();
+      showError(data.detail || 'Could not book this appointment.');
+    }
+  });
+
+  loadServices();
+</script>
+{% endblock %}

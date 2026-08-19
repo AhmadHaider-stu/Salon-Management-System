@@ -30,3 +30,35 @@ def rename_user(session , userID , f_name, l_name):
     except:
         session.rollback()
         raise
+    
+def update_phone(session, userID, phone):
+    try:
+        status, user = get_user(session=session, userID=userID)
+        if status == 'FAIL':
+            raise NotFound()
+
+        if not is_valid_phone(phone, "AE"):
+            raise InvalidPhoneNumber()
+        phone = format_phone(phone, "AE")
+
+        status_p, existing = get_user_by_phone(session=session, phone=phone)
+        if status_p == 'OK' and existing.id != user.id:
+            raise UsedPhoneNumber()
+
+        user.phone = phone
+
+        if user.client_id is not None:
+            status_c, client = get_client(session=session, clientID=user.client_id)
+            if status_c == 'OK':
+                client.phone = phone
+
+        if user.employee_id is not None:
+            status_e, employee = get_employee(session=session, employeeID=user.employee_id)
+            if status_e == 'OK':
+                employee.phone = phone
+
+        session.commit()
+        return user
+    except:
+        session.rollback()
+        raise

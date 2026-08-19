@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Me · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">Me</div>
+  <div class="page-sub">Your account details.</div>
+
+  <div class="me-avatar-row" id="avatarRow" style="display:none;">
+    <div id="avatarContainer"></div>
+    <div>
+      <input type="file" id="photoInput" accept="image/*" style="display:none;" />
+      <button type="button" class="me-avatar-upload-btn" id="uploadBtn">Change photo</button>
+      <span class="me-save-status" id="photoStatus" style="display:none;">Saved</span>
+    </div>
+  </div>
+
+  <div class="me-section">
+    <div class="field-group">
+      <label class="field-label" for="fNameField">First name</label>
+      <input type="text" id="fNameField" class="field-input" style="font-family: var(--font-body);" />
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="lNameField">Last name</label>
+      <input type="text" id="lNameField" class="field-input" style="font-family: var(--font-body);" />
+    </div>
+    <button type="button" class="me-save-btn" id="saveNameBtn">Save name</button>
+    <span class="me-save-status" id="nameStatus" style="display:none;">Saved</span>
+  </div>
+
+  <div class="me-section">
+    <div class="field-group">
+      <label class="field-label">Email</label>
+      <input type="text" id="emailField" class="field-input" style="font-family: var(--font-body);" disabled />
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="phoneField">Phone</label>
+      <input type="tel" id="phoneField" class="field-input" inputmode="numeric" pattern="[0-9+]*" style="font-family: var(--font-body);" />
+    </div>
+    <button type="button" class="me-save-btn" id="savePhoneBtn">Save phone</button>
+    <span class="me-save-status" id="phoneNumStatus" style="display:none;"></span>
+  </div>
+
+  <div class="me-section" id="staffSection" style="display:none;">
+    <div class="section-title">Salon profile</div>
+    <div class="field-group">
+      <label class="field-label" for="bioField">Bio</label>
+      <textarea id="bioField" class="field-input" style="font-family: var(--font-body); min-height: 80px; resize: vertical;"></textarea>
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="socialField">Instagram / Facebook link</label>
+      <input type="text" id="socialField" class="field-input" style="font-family: var(--font-body);" placeholder="https://instagram.com/..." />
+    </div>
+    <button type="button" class="me-save-btn" id="saveProfileBtn">Save profile</button>
+    <span class="me-save-status" id="profileStatus" style="display:none;">Saved</span>
+  </div>
+
+  <div id="meError" style="display:none;" class="error-banner"></div>
+</div>
+
+<script>
+  var currentEmployeeId = null;
+
+  function showStatus(id, text) {
+    var el = document.getElementById(id);
+    el.textContent = text || 'Saved';
+    el.style.display = 'inline';
+    setTimeout(function () { el.style.display = 'none'; }, 2000);
+  }
+
+  function showError(message) {
+    var el = document.getElementById('meError');
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+
+  function renderAvatar(photoUrl, initials) {
+    var container = document.getElementById('avatarContainer');
+    if (photoUrl) {
+      container.innerHTML = '<img src="' + photoUrl + '" alt="" class="me-avatar" id="avatarImg" />';
+    } else {
+      container.innerHTML = '<div class="me-avatar-fallback">' + initials + '</div>';
+    }
+  }
+
+  async function loadMe() {
+    var res = await fetch('/user/me');
+    var user = await res.json();
+
+    document.getElementById('fNameField').value = user.f_name || '';
+    document.getElementById('lNameField').value = user.l_name || '';
+    document.getElementById('emailField').value = user.email || '';
+    document.getElementById('phoneField').value = user.phone || '';
+
+    var initials = ((user.f_name || ' ')[0] + (user.l_name || ' ')[0]).toUpperCase();
+
+    if (user.employee_id) {
+      currentEmployeeId = user.employee_id;
+      document.getElementById('staffSection').style.display = 'block';
+      document.getElementById('avatarRow').style.display = 'flex';
+
+      var empRes = await fetch('/employee/' + user.employee_id);
+      var employee = await empRes.json();
+      document.getElementById('bioField').value = employee.bio || '';
+      document.getElementById('socialField').value = employee.socialMedia || '';
+      renderAvatar(employee.photo, initials);
+    } else {
+      renderAvatar(null, initials);
+      document.getElementById('avatarRow').style.display = 'flex';
+    }
+  }
+
+  document.getElementById('saveNameBtn').addEventListener('click', async function () {
+    document.getElementById('meError').style.display = 'none';
+    var res = await fetch('/user/rename', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        f_name: document.getElementById('fNameField').value,
+        l_name: document.getElementById('lNameField').value
+      })
+    });
+    if (res.ok) {
+      showStatus('nameStatus');
+    } else {
+      var data = await res.json();
+      showError(data.detail || 'Could not save name.');
+    }
+  });
+
+  document.getElementById('savePhoneBtn').addEventListener('click', async function () {
+    document.getElementById('meError').style.display = 'none';
+    var res = await fetch('/user/update-phone', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: document.getElementById('phoneField').value })
+    });
+    if (res.ok) {
+      var updated = await res.json();
+      document.getElementById('phoneField').value = updated.phone;
+      showStatus('phoneNumStatus', 'Saved');
+    } else {
+      var data = await res.json();
+      showError(data.detail || 'Could not save phone number.');
+    }
+  });
+
+  document.getElementById('saveProfileBtn').addEventListener('click', async function () {
+    document.getElementById('meError').style.display = 'none';
+    var res = await fetch('/employee/' + currentEmployeeId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bio: document.getElementById('bioField').value,
+        socialMedia: document.getElementById('socialField').value
+      })
+    });
+    if (res.ok) {
+      showStatus('profileStatus');
+    } else {
+      var data = await res.json();
+      showError(data.detail || 'Could not save profile.');
+    }
+  });
+
+  document.getElementById('uploadBtn').addEventListener('click', function () {
+    document.getElementById('photoInput').click();
+  });
+
+  document.getElementById('photoInput').addEventListener('change', async function () {
+    var file = this.files[0];
+    if (!file || !currentEmployeeId) return;
+
+    document.getElementById('meError').style.display = 'none';
+    var formData = new FormData();
+    formData.append('file', file);
+
+    var res = await fetch('/employee/' + currentEmployeeId + '/photo', {
+      method: 'PUT',
+      body: formData
+    });
+
+    if (res.ok) {
+      var data = await res.json();
+      renderAvatar(data.photo_url, '');
+      showStatus('photoStatus');
+    } else {
+      showError('Could not upload photo.');
+    }
+  });
+
+  loadMe();
+</script>
+{% endblock %}

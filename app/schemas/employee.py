@@ -2,11 +2,13 @@ from pydantic import BaseModel ,Field
 from typing import Optional
 
 class EmployeeResponse(BaseModel):
-    f_name : Optional[str] = Field(default=None,min_length=5 , max_length=30)
-    l_name : Optional[str] = Field(default=None,min_length=5 , max_length=30)
-    active : Optional[bool] = Field(default=1)
-    photo : Optional[str] = Field(default=None)
-    phone : Optional[str] 
+    f_name: Optional[str] = Field(default=None, min_length=5, max_length=30)
+    l_name: Optional[str] = Field(default=None, min_length=5, max_length=30)
+    active: Optional[bool] = Field(default=1)
+    photo: Optional[str] = Field(default=None)
+    phone: Optional[str]
+    bio: Optional[str] = Field(default=None)
+    socialMedia: Optional[str] = Field(default=None)
 
 class EmployeeRequest(BaseModel):
     f_name :str

@@ -1,35 +1,46 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
 
-<head>
-  <title>Home Page</title>
-  <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
-</head>
+{% block title %}Hair Lounge{% endblock %}
 
-<body>
-  <div class="container">
-    <div class="header">
-      <h4>Welcome, {{ user.f_name }} {{ user.l_name }}</h4>
-    </div>
-
-    <div class="user-info">
-      <div class="user-avatar">
-        {% if user.employee and user.employee.photo %}
-          <img src="{{ user.employee.photo }}" alt="Profile photo" class="avatar-img" />
-        {% else %}
-          <img src="{{ url_for('static', path='icons/avatar.png') }}" alt="Default avatar" class="avatar-img" />
-        {% endif %}
-      </div>
-      <div class="user-text">
-        <div class="user-name">{{ user.f_name }}</div>
-        <div class="user-email">{{ user.email }}</div>
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <div class="header-user">
+      {% if user.employee and user.employee.photo %}
+        <img src="{{ user.employee.photo }}" alt="" class="avatar" />
+      {% else %}
+        <div class="avatar-fallback">{{ user.f_name[0] }}{{ user.l_name[0] }}</div>
+      {% endif %}
+      <div>
+        <div class="greeting-name">{{ user.f_name }} {{ user.l_name }}</div>
+        <div class="greeting-sub">Welcome back</div>
       </div>
     </div>
-
-    <form method="post" action="/logout">
-      <button type="submit" class="logout-btn" style="width: 100%;">Logout</button>
-    </form>
   </div>
-</body>
 
-</html>
+  <div class="shortcut-grid">
+    <a href="/book" class="shortcut-card primary">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <div class="shortcut-label">Book</div>
+      <div class="shortcut-sub">New appointment</div>
+    </a>
+    <a href="/my-appointments" class="shortcut-card">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <div class="shortcut-label">My visits</div>
+      <div class="shortcut-sub">View bookings</div>
+    </a>
+  </div>
+
+  <div class="section-title">The salon</div>
+  <div class="placeholder-block">
+    <div class="placeholder-photo">Photo here</div>
+    <div class="placeholder-title">Real content coming soon</div>
+    <div class="placeholder-text">This space will introduce the salon.</div>
+  </div>
+
+  <a href="/contact" class="contact-link">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Contact us
+  </a>
+</div>
+{% endblock %}

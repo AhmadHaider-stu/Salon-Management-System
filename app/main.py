@@ -13,6 +13,7 @@ from app.routes.role_manipulation import router as role_router
 from app.routes.client import router as client_router
 from app.routes.calendar import router as calendar_router
 from app.routes.dashboard import router as dashboard_router
+from app.routes.staff_pages import router as staff_router
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.database import SessionLocal
 from app.business.reminders import send_pending_reminders
@@ -56,6 +57,7 @@ app.include_router(role_router)
 app.include_router(client_router)
 app.include_router(calendar_router)
 app.include_router(dashboard_router)
+app.include_router(staff_router)
 
 
 

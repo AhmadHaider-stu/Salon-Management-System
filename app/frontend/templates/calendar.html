@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">Calendar</div>
+  <div class="page-sub">{{ "Every appointment across the salon." if is_staff else "Your upcoming appointments." }}</div>
+
+  <div id="pageError" style="display:none;" class="error-banner"></div>
+
+  <div class="calendar-controls">
+    <div class="view-toggle">
+      <button type="button" class="view-btn active" data-view="day">Day</button>
+      <button type="button" class="view-btn" data-view="month">Month</button>
+    </div>
+    <input type="date" id="calDate" class="field-input" style="font-family: var(--font-body);" />
+  </div>
+
+  {% if is_staff %}
+  <div class="date-field">
+    <select id="employeeSelect" class="field-input" style="font-family: var(--font-body);">
+      <option value="">All employees</option>
+    </select>
+  </div>
+  {% endif %}
+
+  <div id="calendarBody"></div>
+</div>
+
+<script>
+  {% set is_staff = is_staff | default(false) %}
+  {% set own_employee_id = own_employee_id | default(none) %}
+  var isStaff = {{ 'true' if is_staff else 'false' }};
+  var ownEmployeeId = {{ own_employee_id if own_employee_id else 'null' }};
+  var currentView = 'day';
+  var serviceMap = {};
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function formatTime(iso) {
+    return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function loadServiceMap() {
+    var res = await fetch('/service/all');
+    var services = await res.json();
+    services.forEach(function (s) { serviceMap[s.id] = s.description; });
+  }
+
+  async function loadEmployeeOptions() {
+    if (!isStaff) return;
+    var res = await fetch('/employee/all');
+    var employees = await res.json();
+    var select = document.getElementById('employeeSelect');
+    employees.forEach(function (e) {
+      var opt = document.createElement('option');
+      opt.value = e.id;
+      opt.textContent = e.f_name + ' ' + e.l_name;
+      select.appendChild(opt);
+    });
+  }
+
+  function showError(message) {
+    var el = document.getElementById('pageError');
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+  function clearError() {
+    document.getElementById('pageError').style.display = 'none';
+  }
+
+  async function changeStatus(appointmentId, newStatus) {
+    clearError();
+    var res = await fetch('/appointment/' + appointmentId + '/status?status=' + newStatus, { method: 'PUT' });
+    if (res.ok) {
+      refresh();
+    } else {
+      var data = await res.json();
+      showError(data.detail || 'Could not change status.');
+      refresh();
+    }
+  }
+
+  function statusSelect(appointmentId, current) {
+    var statuses = ['pending', 'confirmed', 'completed', 'cancelled', 'no_show'];
+    var select = document.createElement('select');
+    select.className = 'status-select';
+    statuses.forEach(function (s) {
+      var opt = document.createElement('option');
+      opt.value = s;
+      opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+      if (s === current.toLowerCase()) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener('click', function (e) { e.stopPropagation(); });
+    select.addEventListener('change', function () {
+      changeStatus(appointmentId, select.value);
+    });
+    return select;
+  }
+
+  function renderSalonWideDay(appointments) {
+    var body = document.getElementById('calendarBody');
+    body.innerHTML = '';
+    if (appointments.length === 0) {
+      body.innerHTML = '<div class="cart-empty">No appointments this day</div>';
+      return;
+    }
+    appointments.forEach(function (a) {
+      var card = document.createElement('div');
+      card.className = 'cal-card';
+      card.innerHTML =
+        '<div class="cal-card-top">' +
+          '<div>' +
+            '<div class="cal-card-time">' + formatTime(a.start_time) + ' – ' + formatTime(a.end_time) + '</div>' +
+            '<div class="cal-card-sub">' + (a.phone || 'No phone on file') + '</div>' +
+          '</div>' +
+          '<div class="cal-card-price">AED ' + Number(a.total_price).toFixed(0) + '</div>' +
+        '</div>';
+      var statusRow = document.createElement('div');
+      statusRow.className = 'cal-card-status';
+      statusRow.appendChild(statusSelect(a.id, a.status));
+      card.appendChild(statusRow);
+      body.appendChild(card);
+    });
+  }
+
+  function renderEmployeeDay(services) {
+    var body = document.getElementById('calendarBody');
+    body.innerHTML = '';
+    if (services.length === 0) {
+      body.innerHTML = '<div class="cart-empty">No appointments this day</div>';
+      return;
+    }
+    services.forEach(function (s) {
+      var card = document.createElement('div');
+      card.className = 'cal-card';
+      card.innerHTML =
+        '<div class="cal-card-top">' +
+          '<div>' +
+            '<div class="cal-card-time">' + formatTime(s.start_time) + ' – ' + formatTime(s.end_time) + '</div>' +
+            '<div class="cal-card-sub">' + (serviceMap[s.service_id] || 'Service') + '</div>' +
+          '</div>' +
+          '<div class="cal-card-price">AED ' + Number(s.price).toFixed(0) + '</div>' +
+        '</div>';
+      var statusRow = document.createElement('div');
+      statusRow.className = 'cal-card-status';
+      statusRow.appendChild(statusSelect(s.appointment_id, s.status));
+      card.appendChild(statusRow);
+      body.appendChild(card);
+    });
+  }
+
+  function renderMonthList(buckets, onDayClick) {
+    var body = document.getElementById('calendarBody');
+    body.innerHTML = '';
+    Object.keys(buckets).sort(function (a, b) { return Number(a) - Number(b); }).forEach(function (day) {
+      var items = buckets[day];
+      var row = document.createElement('div');
+      row.className = 'month-day-row';
+      row.innerHTML =
+        '<div class="month-day-num">' + day + '</div>' +
+        '<div class="month-day-count">' + (items.length === 0 ? 'No appointments' : items.length + ' appointment' + (items.length === 1 ? '' : 's')) + '</div>';
+      row.addEventListener('click', function () { onDayClick(day); });
+      body.appendChild(row);
+    });
+  }
+
+  async function loadDay() {
+    var date = document.getElementById('calDate').value;
+    var employeeId = isStaff ? document.getElementById('employeeSelect').value : ownEmployeeId;
+
+    if (employeeId) {
+      var res = await fetch('/employee/' + employeeId + '/calendar/day?date=' + date);
+      var data = await res.json();
+      renderEmployeeDay(data);
+    } else {
+      var res2 = await fetch('/calendar/day?date=' + date);
+      var data2 = await res2.json();
+      renderSalonWideDay(data2);
+    }
+  }
+
+  async function loadMonth() {
+    var date = document.getElementById('calDate').value;
+    var parts = date.split('-');
+    var year = parts[0], month = parts[1];
+    var employeeId = isStaff ? document.getElementById('employeeSelect').value : ownEmployeeId;
+
+    var url = employeeId
+      ? '/employee/' + employeeId + '/calendar/month?year=' + year + '&month=' + month
+      : '/calendar/month?year=' + year + '&month=' + month;
+
+    var res = await fetch(url);
+    var buckets = await res.json();
+
+    renderMonthList(buckets, function (day) {
+      document.getElementById('calDate').value = year + '-' + month + '-' + pad(Number(day));
+      setView('day');
+    });
+  }
+
+  function refresh() {
+    if (currentView === 'day') loadDay(); else loadMonth();
+  }
+
+  function setView(view) {
+    currentView = view;
+    document.querySelectorAll('.view-btn').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-view') === view);
+    });
+    refresh();
+  }
+
+  document.querySelectorAll('.view-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () { setView(btn.getAttribute('data-view')); });
+  });
+  document.getElementById('calDate').addEventListener('change', refresh);
+  if (isStaff) {
+    document.getElementById('employeeSelect').addEventListener('change', refresh);
+  }
+
+  document.getElementById('calDate').value = todayStr();
+
+  (async function init() {
+    await loadServiceMap();
+    await loadEmployeeOptions();
+    refresh();
+  })();
+</script>
+{% endblock %}

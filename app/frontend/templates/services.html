@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Services · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">Services</div>
+  <div class="page-sub">Everything we offer.</div>
+
+  <div id="servicesList"></div>
+
+  <a href="/book" class="btn btn-primary" style="margin-top: 24px;">Book an appointment</a>
+</div>
+
+<script>
+  function formatPrice(value) {
+    return 'AED ' + Number(value).toFixed(0);
+  }
+
+  function renderCategoryLabel(category) {
+    return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+  }
+
+  async function loadServices() {
+    var res = await fetch('/service/all');
+    var services = await res.json();
+
+    var byCategory = {};
+    services.forEach(function (s) {
+      if (!s.active) return;
+      if (!byCategory[s.category]) byCategory[s.category] = [];
+      byCategory[s.category].push(s);
+    });
+
+    var container = document.getElementById('servicesList');
+    container.innerHTML = '';
+
+    Object.keys(byCategory).forEach(function (category) {
+      var title = document.createElement('div');
+      title.className = 'category-title';
+      title.textContent = renderCategoryLabel(category);
+      container.appendChild(title);
+
+      byCategory[category].forEach(function (service) {
+        var row = document.createElement('div');
+        row.className = 'service-row';
+        row.innerHTML =
+          '<div class="service-row-main">' +
+            '<div>' +
+              '<div class="service-name">' + service.description + '</div>' +
+              '<div class="service-meta">' + service.time_duration + ' min</div>' +
+            '</div>' +
+            '<div class="service-price">' + formatPrice(service.price) + '</div>' +
+          '</div>';
+        container.appendChild(row);
+      });
+    });
+  }
+
+  loadServices();
+</script>
+{% endblock %}

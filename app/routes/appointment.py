@@ -18,6 +18,9 @@ from app.exceptions.appointments import *
 from app.business.client_logic import find_or_create_walk_in
 from app.schemas.client import WalkInBookingCreate
 
+from app.schemas.appointment import AvailabilityRequest
+from app.business.appointment_logic import get_available_slots
+
 
 
 router = APIRouter(prefix='/appointment', tags=['appointment'])
@@ -29,7 +32,7 @@ def check_appointment_ownership(appointment , user):
         return False
     return True
 
-@router.get('' , summary='list all my appointments')
+@router.get('/my' , summary='list all my appointments')
 def list_my_appointments(db:dict = Depends(get_db) , user = Depends(get_current_user)):
     if (user.client_id == None):
         raise HTTPException(status_code=403 ,detail='No client record for user' )
@@ -47,7 +50,7 @@ def get_this_appointment(appointmentID : int , db:dict = Depends(get_db) , user:
         raise HTTPException(status_code=404 , detail = 'Appointment not found')
     
 
-@router.post('' , summary='Book an appointment')
+@router.post('/book' , summary='Book an appointment')
 def create_appointment(data: AppointmentCreate, db: dict = Depends(get_db), user=Depends(get_current_user)):
     if user.client_id is None:
         raise HTTPException(status_code=403, detail="No client record for this user")
@@ -86,7 +89,7 @@ def change_status(status : AppointmentStatus,appointmentID : int , db : dict = D
         change_appointment_status(session=db ,appointmentID=appointmentID,status= status)
         return 'Status changed'
     except NotFoundAppointment:
-        HTTPException(status_code=404 , detail = 'Not found appointment')
+        raise HTTPException(status_code=404 , detail = 'Not found appointment')
 
 @router.delete('/appointment_service/{appointmentServiceID:int}' , summary= 'Delete appointment service' , dependencies=[Depends(require_receptionist_or_admin)])
 def cancel_appointment_service(appointmentServiceID,db:dict = Depends(get_db)):
@@ -94,7 +97,7 @@ def cancel_appointment_service(appointmentServiceID,db:dict = Depends(get_db)):
         last_service = delete_appointment_service(session=db , appointment_serviceID=appointmentServiceID)
         return last_service
     except NotFoundAppointment:
-        HTTPException(status_code=404 , detail = 'Not found appointment')
+        raise HTTPException(status_code=404 , detail = 'Not found appointment')
 
 @router.delete('/{appointmentID}' , summary = 'Delete appointment' , dependencies=[Depends(require_receptionist_or_admin)])
 def destroy_appointment(appointmentID:int , db:dict = Depends(get_db)):
@@ -184,3 +187,13 @@ def edit_price(appointmentServiceID: int, data: PriceUpdateRequest, db: dict = D
         raise HTTPException(status_code=404, detail="Appointment service not found")
     except CannotModifyAppointment:
         raise HTTPException(status_code=400, detail="Cannot modify a completed or cancelled appointment")
+
+
+
+@router.post('/availability')
+def availability(data: AvailabilityRequest, db: dict = Depends(get_db), user=Depends(get_current_user)):
+    try:
+        slots = get_available_slots(session=db, employee_servicesIDs=data.services, date=data.date, exclude_appointment_id=data.exclude_appointment_id)
+    except NotFoundService:
+        raise HTTPException(status_code=404, detail="Service not found")
+    return {"slots": [s.isoformat() for s in slots]}

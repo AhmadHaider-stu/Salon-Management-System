@@ -1,5 +1,6 @@
 from pydantic import BaseModel , Field 
-from datetime import datetime
+from datetime import datetime 
+from datetime import date as date_type
 from app.enums.enum import AppointmentStatus
 from typing import Optional
 class ServiceSelection(BaseModel):
@@ -9,7 +10,7 @@ class ServiceSelection(BaseModel):
 class AppointmentCreate(BaseModel):
     start_time: datetime
     services: list[ServiceSelection]
-    note : Optional[str]= Field(max_length=500)
+    note : Optional[str]= Field(default=None,max_length=500)
 
 
 class RescheduleRequest(BaseModel):
@@ -22,3 +23,7 @@ class AddServiceRequest(BaseModel):
 class PriceUpdateRequest(BaseModel):
     price: float
 
+class AvailabilityRequest(BaseModel):
+    services: list[ServiceSelection]
+    date: date_type
+    exclude_appointment_id: Optional[int] = None
