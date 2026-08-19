@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Employees · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">Employees</div>
+  <div class="page-sub">Profile, services, and schedule for each stylist.</div>
+
+  <div id="pageError" style="display:none;" class="error-banner"></div>
+
+  <div id="employeeList"></div>
+</div>
+
+<script>
+  var DAYS = [
+    { value: 'sunday', label: 'Sunday' },
+    { value: 'monday', label: 'Monday' },
+    { value: 'tuesday', label: 'Tuesday' },
+    { value: 'wednesday', label: 'Wednesday' },
+    { value: 'thursday', label: 'Thursday' },
+    { value: 'friday', label: 'Friday' },
+    { value: 'saturday', label: 'Saturday' }
+  ];
+
+  var allServices = [];
+
+  function showError(message) {
+    var el = document.getElementById('pageError');
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+  function clearError() {
+    document.getElementById('pageError').style.display = 'none';
+  }
+
+  async function loadAllServices() {
+    var res = await fetch('/service/all');
+    allServices = await res.json();
+  }
+
+  async function loadEmployees() {
+    clearError();
+    var res = await fetch('/employee/all');
+    var employees = await res.json();
+
+    var list = document.getElementById('employeeList');
+    list.innerHTML = '';
+
+    if (employees.length === 0) {
+      list.innerHTML = '<div class="cart-empty">No employees yet</div>';
+      return;
+    }
+
+    employees.forEach(function (emp) {
+      list.appendChild(buildEmployeeCard(emp));
+    });
+  }
+
+  function buildEmployeeCard(emp) {
+    var card = document.createElement('div');
+    card.className = 'cal-card clickable';
+    card.innerHTML =
+      '<div class="cal-card-top">' +
+        '<div style="display:flex;align-items:center;gap:12px;">' +
+          (emp.photo
+            ? '<img src="' + emp.photo + '" alt="" class="avatar" />'
+            : '<div class="avatar-fallback">' + (emp.f_name ? emp.f_name[0] : '?') + '</div>') +
+          '<div>' +
+            '<div class="cal-card-time">' + emp.f_name + ' ' + emp.l_name + '</div>' +
+            '<div class="cal-card-sub">' + (emp.phone || 'No phone') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<span class="status-badge ' + (emp.active ? 'status-active' : 'status-inactive') + '">' +
+          (emp.active ? 'Active' : 'Inactive') +
+        '</span>' +
+      '</div>' +
+      '<div class="appt-detail" id="emp-detail-' + emp.id + '"></div>';
+
+    var detail = card.querySelector('.appt-detail');
+    var loaded = false;
+
+    card.addEventListener('click', function () {
+      var isOpen = card.classList.toggle('open');
+      detail.classList.toggle('open', isOpen);
+      if (isOpen && !loaded) {
+        loaded = true;
+        buildEmployeeDetail(emp, detail);
+      }
+    });
+
+    return card;
+  }
+
+  async function buildEmployeeDetail(emp, detail) {
+    detail.innerHTML = '<div class="cal-card-sub">Loading…</div>';
+
+    var empRes = await fetch('/employee/' + emp.id);
+    var freshEmp = await empRes.json();
+
+    var scheduleRes = await fetch('/employee/' + emp.id + '/schedule');
+    var schedule = await scheduleRes.json();
+    var scheduleByDay = {};
+    schedule.forEach(function (s) { scheduleByDay[s.day_of_week] = s; });
+
+    var servicesRes = await fetch('/employee/' + emp.id + '/services');
+    var assignedServices = await servicesRes.json();
+    var assignedIds = assignedServices.map(function (s) { return s.id; });
+
+    detail.innerHTML =
+      '<div class="section-title">Profile</div>' +
+      '<div class="field-group">' +
+        '<label class="field-label">Bio</label>' +
+        '<textarea class="field-input emp-bio" style="font-family: var(--font-body); min-height: 70px; resize: vertical;">' + (freshEmp.bio || '') + '</textarea>' +
+      '</div>' +
+      '<div class="field-group">' +
+        '<label class="field-label">Instagram / Facebook link</label>' +
+        '<input type="text" class="field-input emp-social" style="font-family: var(--font-body);" value="' + (freshEmp.socialMedia || '') + '" />' +
+      '</div>' +
+      '<div class="field-group" style="display:flex;align-items:center;gap:8px;">' +
+        '<input type="checkbox" class="emp-active" id="active-' + emp.id + '" ' + (freshEmp.active ? 'checked' : '') + ' />' +
+        '<label for="active-' + emp.id + '" style="font-size:13px;">Active</label>' +
+      '</div>' +
+      '<button type="button" class="confirm-add-btn emp-save-profile-btn">Save profile</button>' +
+
+      '<div class="section-title" style="margin-top:24px;">Assigned services</div>' +
+      '<div class="emp-services-list">' +
+        allServices.map(function (s) {
+          return '<label class="checklist-row"><input type="checkbox" class="emp-service-check" value="' + s.id + '" ' + (assignedIds.indexOf(s.id) !== -1 ? 'checked' : '') + ' /> ' + s.description + '</label>';
+        }).join('') +
+      '</div>' +
+      '<button type="button" class="confirm-add-btn emp-save-services-btn">Save services</button>' +
+
+      '<div class="section-title" style="margin-top:24px;">Weekly schedule</div>' +
+      '<div class="emp-schedule-list">' +
+        DAYS.map(function (d) {
+          var existing = scheduleByDay[d.value];
+          var checked = !!existing;
+          return (
+            '<div class="day-schedule-row">' +
+              '<label style="display:flex;align-items:center;gap:8px;width:130px;flex-shrink:0;">' +
+                '<input type="checkbox" class="emp-day-check" data-day="' + d.value + '" ' + (checked ? 'checked' : '') + ' />' +
+                '<span class="day-schedule-label" style="width:auto;">' + d.label + '</span>' +
+              '</label>' +
+              '<div class="day-schedule-times" style="' + (checked ? '' : 'display:none;') + '" data-day-times="' + d.value + '">' +
+                '<input type="time" class="emp-day-start" data-day="' + d.value + '" value="' + (existing ? existing.start_time.slice(0, 5) : '09:00') + '" />' +
+                '<span>–</span>' +
+                '<input type="time" class="emp-day-end" data-day="' + d.value + '" value="' + (existing ? existing.end_time.slice(0, 5) : '18:00') + '" />' +
+              '</div>' +
+            '</div>'
+          );
+        }).join('') +
+      '</div>' +
+      '<button type="button" class="confirm-add-btn emp-save-schedule-btn">Save schedule</button>' +
+
+      '<a href="/reception/calendar?employee=' + emp.id + '" class="text-link" style="display:block;margin-top:18px;">View calendar →</a>';
+
+    detail.querySelectorAll('input, textarea, button, a').forEach(function (el) {
+      el.addEventListener('click', function (e) { e.stopPropagation(); });
+    });
+
+    detail.querySelectorAll('.emp-day-check').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var day = cb.getAttribute('data-day');
+        detail.querySelector('[data-day-times="' + day + '"]').style.display = cb.checked ? 'flex' : 'none';
+      });
+    });
+
+    detail.querySelector('.emp-save-profile-btn').addEventListener('click', async function () {
+      clearError();
+      var payload = {
+        bio: detail.querySelector('.emp-bio').value,
+        socialMedia: detail.querySelector('.emp-social').value,
+        active: detail.querySelector('.emp-active').checked
+      };
+      var res = await fetch('/employee/' + emp.id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        loadEmployees();
+      } else {
+        var data = await res.json();
+        showError(data.detail || 'Could not save profile.');
+      }
+    });
+
+    detail.querySelector('.emp-save-services-btn').addEventListener('click', async function () {
+      clearError();
+      var checked = Array.from(detail.querySelectorAll('.emp-service-check:checked')).map(function (cb) {
+        return parseInt(cb.value, 10);
+      });
+      var res = await fetch('/employee/' + emp.id + '/assign_services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ services: checked })
+      });
+      if (res.ok) {
+        showError('');
+        clearError();
+      } else {
+        var data = await res.json();
+        showError(data.detail || 'Could not save services.');
+      }
+    });
+
+    detail.querySelector('.emp-save-schedule-btn').addEventListener('click', async function () {
+      clearError();
+      var entries = [];
+      detail.querySelectorAll('.emp-day-check:checked').forEach(function (cb) {
+        var day = cb.getAttribute('data-day');
+        var start = detail.querySelector('.emp-day-start[data-day="' + day + '"]').value;
+        var end = detail.querySelector('.emp-day-end[data-day="' + day + '"]').value;
+        entries.push({ day_of_week: day, start_time: start, end_time: end });
+      });
+      var res = await fetch('/employee/' + emp.id + '/schedule', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entries: entries })
+      });
+      if (res.ok) {
+        clearError();
+      } else {
+        var data = await res.json();
+        showError(data.detail || 'Could not save schedule.');
+      }
+    });
+  }
+
+  (async function init() {
+    await loadAllServices();
+    await loadEmployees();
+  })();
+</script>
+{% endblock %}

@@ -187,18 +187,20 @@ def book_appointment(session, clientID,  employee_servicesIDs, start_time,note= 
         raise
 
 
-def change_appointment_status(session , appointmentID, status):
-    appointment = get_or_raise(session=session,appointmentID=appointmentID)
-    appointment.status = status
-    change_appointment_service_status(session=session,appointmentID=appointmentID , status=status)
-    session.commit()
+# def change_appointment_status(session , appointmentID, status):
+#     appointment = get_or_raise(session=session,appointmentID=appointmentID)
+#     appointment.status = status
+#     change_appointment_service_status(session=session,appointmentID=appointmentID , status=status)
+#     session.commit()
 
 # add to employee hours and services total_order 
 def change_appointment_service_status(session , appointmentID , status):
     appointments = get_appointment_service_by_appointment(session=session, appointmentID=appointmentID)[1]
     for appointment in appointments:
         appointment.status = status 
-    
+    return appointments
+
+
 def delete_appointment_service(session , appointment_serviceID):
     appointment_service = get_or_raise_appointment_service(session=session,appointment_serviceID=appointment_serviceID)
     appointment_id = appointment_service.appointment_id 
@@ -224,15 +226,16 @@ def delete_appointment(session , appointmentID):
 def change_appointment_status(session, appointmentID, status):
     appointment = get_appointment(session=session, appointmentID=appointmentID)[1]
     appointment.status = status
-    change_appointment_service_status(session=session, appointmentID=appointmentID, status=status)
+    appointments = change_appointment_service_status(session=session, appointmentID=appointmentID, status=status)
     session.commit()
 
     if status == AppointmentStatus.CONFIRMED and not appointment.confirmation_sent:
         send_confirmation_emails(session=session, appointmentID=appointmentID)
         appointment.confirmation_sent = True
         session.commit()
-    elif status == AppointmentStatus.COMPLETED:
+    elif status == AppointmentStatus.COMPLETED and appointments[0].reminder == False:
         send_completion_email(session=session, appointmentID=appointmentID)
+        session.commit()
 
 def reschedule_appointment(session, appointmentID, new_start_time):
     try:

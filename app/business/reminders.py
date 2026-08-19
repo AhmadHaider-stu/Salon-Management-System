@@ -26,19 +26,26 @@ def send_confirmation_emails(session, appointmentID):
     if services_status == 'OK':
         for entry in services:
             emp_status, employee = get_employee(session=session, employeeID=entry.employee_id)
-            if emp_status == 'OK' and employee.email:
+            if emp_status == 'OK' and employee.email :
                 send_email(
                     employee.email,
                     "New Appointment Confirmed",
                     f"Hi {employee.f_name}, you have a confirmed booking at {entry.start_time}."
                 )
+                entry.reminder = True
 
 
 def send_completion_email(session, appointmentID):
     status, appointment = get_appointment(session=session, appointmentID=appointmentID)
     if status == 'FAIL':
         return
-
+    services_status, services = get_appointment_service_by_appointment(session=session, appointmentID=appointmentID)
+    if services_status == 'OK':
+        for entry in services:
+                if entry.reminder == 1:
+                    return 
+                else:
+                    entry.reminder = True
     client_status, client = get_client(session=session, clientID=appointment.client_id)
     if client_status == 'OK' and client.email:
         send_email(

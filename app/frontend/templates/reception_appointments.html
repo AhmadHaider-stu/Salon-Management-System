@@ -19,6 +19,7 @@
 <script>
   var serviceMap = {};
   var employeeCache = {};
+  var clientMap = {};
 
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function todayStr() {
@@ -44,6 +45,12 @@
     var res = await fetch('/service/all');
     var services = await res.json();
     services.forEach(function (s) { serviceMap[s.id] = s.description; });
+  }
+
+  async function loadClientMap() {
+    var res = await fetch('/client');
+    var clients = await res.json();
+    clients.forEach(function (c) { clientMap[c.id] = c.f_name + ' ' + c.l_name; });
   }
 
   async function resolveEmployeeName(serviceId, employeeId) {
@@ -107,11 +114,12 @@
   function buildCard(appt) {
     var card = document.createElement('div');
     card.className = 'cal-card clickable';
+    var clientName = clientMap[appt.client_id] || (appt.phone || 'Unknown client');
     card.innerHTML =
       '<div class="cal-card-top">' +
         '<div>' +
           '<div class="cal-card-time">' + formatTime(appt.start_time) + ' – ' + formatTime(appt.end_time) + '</div>' +
-          '<div class="cal-card-sub">' + (appt.phone || 'No phone on file') + '</div>' +
+          '<div class="cal-card-sub">' + clientName + (appt.phone ? ' · ' + appt.phone : '') + '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:10px;" class="status-cell"></div>' +
       '</div>' +
@@ -281,6 +289,7 @@
 
   (async function init() {
     await loadServiceMap();
+    await loadClientMap();
     await loadAppointments();
   })();
 </script>

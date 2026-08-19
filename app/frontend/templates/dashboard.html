@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">Dashboard</div>
+  <div class="page-sub">Salon overview.</div>
+
+  <div id="pageError" style="display:none;" class="error-banner"></div>
+
+  <div class="stat-grid" id="statGrid"></div>
+
+  <div class="section-title">Activity by hour</div>
+  <div class="hour-chart" id="hourChart"></div>
+  <div class="hour-labels" id="hourLabels"></div>
+
+  <div class="date-field" style="margin-bottom: 16px;">
+    <input type="date" id="dashDate" class="field-input" style="font-family: var(--font-body); max-width: 220px;" />
+  </div>
+
+  <div class="section-title">Appointments</div>
+  <div id="dashAppointments" style="margin-bottom: 28px;"></div>
+
+  <div class="section-title">Stylists today</div>
+  <div id="stylistList"></div>
+</div>
+
+<script>
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function formatTime(iso) {
+    return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
+  function formatPrice(value) {
+    return 'AED ' + Number(value).toFixed(0);
+  }
+  function statusBadgeClass(status) {
+    return 'status-badge status-' + status.toLowerCase();
+  }
+  function showError(message) {
+    var el = document.getElementById('pageError');
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+
+  async function loadSummary() {
+    var res = await fetch('/dashboard/summary');
+    var data = await res.json();
+
+    var stats = [
+      { label: 'Total customers', value: data.total_customers },
+      { label: 'Total appointments', value: data.total_appointments },
+      { label: 'Accepted', value: data.total_accepted },
+      { label: 'Rejected', value: data.total_rejected },
+      { label: 'Total services', value: data.total_services },
+      { label: "Yesterday's appointments", value: data.yesterday_appointments },
+      { label: 'Upcoming appointments', value: data.upcoming_appointments }
+    ];
+
+    var grid = document.getElementById('statGrid');
+    grid.innerHTML = stats.map(function (s) {
+      return '<div class="stat-card"><div class="stat-value">' + s.value + '</div><div class="stat-label">' + s.label + '</div></div>';
+    }).join('');
+  }
+
+  async function loadHourChart() {
+    var date = document.getElementById('dashDate').value;
+    var res = await fetch('/dashboard/appointments-by-hour?date=' + date);
+    var buckets = await res.json();
+
+    var hours = Object.keys(buckets).sort(function (a, b) { return Number(a) - Number(b); });
+    var max = Math.max.apply(null, hours.map(function (h) { return buckets[h]; }).concat([1]));
+
+    var chart = document.getElementById('hourChart');
+    var labels = document.getElementById('hourLabels');
+    chart.innerHTML = '';
+    labels.innerHTML = '';
+
+    hours.forEach(function (h) {
+      var pct = (buckets[h] / max) * 100;
+      chart.innerHTML += '<div class="hour-bar-wrap"><div class="hour-bar" style="height:' + pct + '%" title="' + buckets[h] + ' at ' + h + ':00"></div></div>';
+      labels.innerHTML += '<div class="hour-label">' + (h % 3 === 0 ? h : '') + '</div>';
+    });
+  }
+
+  var clientMap = {};
+  var serviceMap = {};
+  var employeeCache = {};
+
+  async function loadClientMap() {
+    var res = await fetch('/client');
+    var clients = await res.json();
+    clients.forEach(function (c) { clientMap[c.id] = c.f_name + ' ' + c.l_name; });
+  }
+
+  async function loadServiceMap() {
+    var res = await fetch('/service/all');
+    var services = await res.json();
+    services.forEach(function (s) { serviceMap[s.id] = s.description; });
+  }
+
+  async function resolveEmployeeName(serviceId, employeeId) {
+    if (!employeeCache[serviceId]) {
+      var res = await fetch('/service/' + serviceId + '/employees');
+      employeeCache[serviceId] = await res.json();
+    }
+    var match = employeeCache[serviceId].find(function (e) { return e.id === employeeId; });
+    return match ? (match.f_name + ' ' + match.l_name) : 'Stylist';
+  }
+
+  async function loadDashAppointments() {
+    var date = document.getElementById('dashDate').value;
+    var res = await fetch('/dashboard/appointments?date=' + date);
+    var appointments = await res.json();
+
+    var container = document.getElementById('dashAppointments');
+    if (appointments.length === 0) {
+      container.innerHTML = '<div class="cart-empty">No appointments this day</div>';
+      return;
+    }
+
+    appointments.sort(function (a, b) { return new Date(a.start_time) - new Date(b.start_time); });
+
+    container.innerHTML = '';
+    appointments.forEach(function (a) {
+      container.appendChild(buildDashCard(a));
+    });
+  }
+
+  function buildDashCard(a) {
+    var card = document.createElement('div');
+    card.className = 'cal-card clickable';
+    var clientName = clientMap[a.client_id] || (a.phone || 'Unknown client');
+    card.innerHTML =
+      '<div class="cal-card-top">' +
+        '<div>' +
+          '<div class="cal-card-time">' + formatTime(a.start_time) + ' – ' + formatTime(a.end_time) + '</div>' +
+          '<div class="cal-card-sub">' + clientName + (a.phone ? ' · ' + a.phone : '') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<span class="' + statusBadgeClass(a.status) + '">' + a.status + '</span>' +
+          '<svg class="cal-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cal-card-price" style="margin-top:6px;">' + formatPrice(a.total_price) + '</div>' +
+      '<div class="appt-detail"></div>';
+
+    var detail = card.querySelector('.appt-detail');
+    var loaded = false;
+
+    card.addEventListener('click', async function () {
+      var isOpen = card.classList.toggle('open');
+      detail.classList.toggle('open', isOpen);
+      if (isOpen && !loaded) {
+        loaded = true;
+        detail.innerHTML = '<div class="cal-card-sub">Loading…</div>';
+        var res = await fetch('/appointment/' + a.id);
+        var data = await res.json();
+
+        var html = '';
+        for (var i = 0; i < data.services.length; i++) {
+          var s = data.services[i];
+          var employeeName = await resolveEmployeeName(s.service_id, s.employee_id);
+          html +=
+            '<div class="appt-detail-service">' +
+              '<div>' +
+                '<div class="appt-service-name">' + (serviceMap[s.service_id] || 'Service') + '</div>' +
+                '<div class="appt-service-sub">with ' + employeeName + ' · ' + formatTime(s.start_time) + '</div>' +
+              '</div>' +
+              '<div class="cart-item-price">' + formatPrice(s.price) + '</div>' +
+            '</div>';
+        }
+        detail.innerHTML = html || '<div class="cal-card-sub">No services found.</div>';
+      }
+    });
+
+    return card;
+  }
+
+  async function loadStylists() {
+    var res = await fetch('/dashboard/stylists');
+    var stylists = await res.json();
+
+    var list = document.getElementById('stylistList');
+    if (stylists.length === 0) {
+      list.innerHTML = '<div class="cart-empty">No employees yet</div>';
+      return;
+    }
+
+    list.innerHTML = stylists.map(function (s) {
+      var avatar = s.photo
+        ? '<img src="' + s.photo + '" alt="" class="avatar" />'
+        : '<div class="avatar-fallback">' + s.name[0] + '</div>';
+      return (
+        '<div class="stylist-row">' +
+          avatar +
+          '<div class="stylist-name">' + s.name + '</div>' +
+          '<div class="stylist-count">' + s.appointments_today + ' today</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  async function refreshDayScoped() {
+    await Promise.all([loadHourChart(), loadDashAppointments()]);
+  }
+
+  document.getElementById('dashDate').addEventListener('change', refreshDayScoped);
+  document.getElementById('dashDate').value = todayStr();
+
+  (async function init() {
+    try {
+      await Promise.all([loadClientMap(), loadServiceMap()]);
+      await loadSummary();
+      await refreshDayScoped();
+      await loadStylists();
+    } catch (err) {
+      showError('Could not load dashboard data.');
+    }
+  })();
+</script>
+{% endblock %}

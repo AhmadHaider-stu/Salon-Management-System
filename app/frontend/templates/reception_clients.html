@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Clients · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">Clients</div>
+  <div class="page-sub">Click a client to see their appointment history.</div>
+
+  <div id="pageError" style="display:none;" class="error-banner"></div>
+
+  <div id="clientList"></div>
+</div>
+
+<script>
+  function showError(message) {
+    var el = document.getElementById('pageError');
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+
+  function formatDate(iso) {
+    return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+  function formatTime(iso) {
+    return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
+  function formatPrice(value) {
+    return 'AED ' + Number(value).toFixed(0);
+  }
+  function statusBadgeClass(status) {
+    return 'status-badge status-' + status.toLowerCase();
+  }
+
+  async function loadClients() {
+    var res = await fetch('/client');
+    var clients = await res.json();
+
+    var list = document.getElementById('clientList');
+    list.innerHTML = '';
+
+    if (clients.length === 0) {
+      list.innerHTML = '<div class="cart-empty">No clients yet</div>';
+      return;
+    }
+
+    clients.forEach(function (client) {
+      list.appendChild(buildClientCard(client));
+    });
+  }
+
+  function buildClientCard(client) {
+    var card = document.createElement('div');
+    card.className = 'cal-card clickable';
+    card.innerHTML =
+      '<div class="cal-card-top">' +
+        '<div>' +
+          '<div class="cal-card-time">' + client.f_name + ' ' + client.l_name + '</div>' +
+          '<div class="cal-card-sub">' + (client.phone || '—') + (client.email ? ' · ' + client.email : '') + '</div>' +
+        '</div>' +
+        '<svg class="cal-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+      '</div>' +
+      '<div class="appt-detail"></div>';
+
+    var detail = card.querySelector('.appt-detail');
+    var loaded = false;
+
+    card.addEventListener('click', async function () {
+      var isOpen = card.classList.toggle('open');
+      detail.classList.toggle('open', isOpen);
+      if (isOpen && !loaded) {
+        loaded = true;
+        await loadClientAppointments(client.id, detail);
+      }
+    });
+
+    return card;
+  }
+
+  async function loadClientAppointments(clientId, detail) {
+    detail.innerHTML = '<div class="cal-card-sub">Loading…</div>';
+
+    var res = await fetch('/client/' + clientId + '/appointments');
+    if (!res.ok) {
+      showError('Could not load appointment history.');
+      detail.innerHTML = '<div class="cal-card-sub">Could not load appointments.</div>';
+      return;
+    }
+    var appointments = await res.json();
+
+    if (appointments.length === 0) {
+      detail.innerHTML = '<div class="cal-card-sub">No appointments yet.</div>';
+      return;
+    }
+
+    appointments.sort(function (a, b) { return new Date(b.start_time) - new Date(a.start_time); });
+
+    var html = '';
+    appointments.forEach(function (a) {
+      html +=
+        '<div class="appt-detail-service">' +
+          '<div>' +
+            '<div class="appt-service-name">' + formatDate(a.start_time) + '</div>' +
+            '<div class="appt-service-sub">' + formatTime(a.start_time) + ' – ' + formatTime(a.end_time) + ' · <span class="' + statusBadgeClass(a.status) + '">' + a.status + '</span></div>' +
+          '</div>' +
+          '<div class="cart-item-price">' + formatPrice(a.total_price) + '</div>' +
+        '</div>';
+    });
+    detail.innerHTML = html;
+  }
+
+  loadClients();
+</script>
+{% endblock %}

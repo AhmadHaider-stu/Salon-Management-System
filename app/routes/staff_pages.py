@@ -41,12 +41,11 @@ def employee_calendar(request: Request, user=Depends(get_current_user)):
 def admin_dashboard(request: Request, user=Depends(get_current_user)):
     if user.role != Role.ADMIN:
         return RedirectResponse(get_role_home(user.role))
-    return templates.TemplateResponse(request=request, name="coming_soon.html", context={
+    return templates.TemplateResponse(request=request, name="dashboard.html", context={
         "user": user,
         "active_page": "dashboard",
         "nav_links": get_nav_links(user.role),
         "brand_href": get_role_home(user.role),
-        "page_title": "Dashboard",
     })
 
 
@@ -61,6 +60,30 @@ def me_page(request: Request, user=Depends(get_current_user)):
     })
 
 
+@router.get('/reception/employees')
+def reception_employees(request: Request, user=Depends(get_current_user)):
+    if user.role not in (Role.RECEPTION, Role.ADMIN):
+        return RedirectResponse(get_role_home(user.role))
+    return templates.TemplateResponse(request=request, name="reception_employees.html", context={
+        "user": user,
+        "active_page": "employees",
+        "nav_links": get_nav_links(user.role),
+        "brand_href": get_role_home(user.role),
+    })
+
+
+@router.get('/reception/clients')
+def reception_clients(request: Request, user=Depends(get_current_user)):
+    if user.role not in (Role.RECEPTION, Role.ADMIN):
+        return RedirectResponse(get_role_home(user.role))
+    return templates.TemplateResponse(request=request, name="reception_clients.html", context={
+        "user": user,
+        "active_page": "clients",
+        "nav_links": get_nav_links(user.role),
+        "brand_href": get_role_home(user.role),
+    })
+
+
 @router.get('/reception/appointments')
 def reception_appointments(request: Request, user=Depends(get_current_user)):
     if user.role not in (Role.RECEPTION, Role.ADMIN):
@@ -68,6 +91,30 @@ def reception_appointments(request: Request, user=Depends(get_current_user)):
     return templates.TemplateResponse(request=request, name="reception_appointments.html", context={
         "user": user,
         "active_page": "appointments",
+        "nav_links": get_nav_links(user.role),
+        "brand_href": get_role_home(user.role),
+    })
+
+
+@router.get('/reception/employees')
+def reception_employees(request: Request, user=Depends(get_current_user)):
+    if user.role not in (Role.RECEPTION, Role.ADMIN):
+        return RedirectResponse(get_role_home(user.role))
+    return templates.TemplateResponse(request=request, name="reception_employees.html", context={
+        "user": user,
+        "active_page": "employees",
+        "nav_links": get_nav_links(user.role),
+        "brand_href": get_role_home(user.role),
+    })
+
+
+@router.get('/reception/clients')
+def reception_clients(request: Request, user=Depends(get_current_user)):
+    if user.role not in (Role.RECEPTION, Role.ADMIN):
+        return RedirectResponse(get_role_home(user.role))
+    return templates.TemplateResponse(request=request, name="reception_clients.html", context={
+        "user": user,
+        "active_page": "clients",
         "nav_links": get_nav_links(user.role),
         "brand_href": get_role_home(user.role),
     })

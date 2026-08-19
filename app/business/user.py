@@ -2,6 +2,7 @@ from app.CRUD.user import *
 from app.CRUD.employee import get_employee , update_employee_name
 from app.CRUD.client import get_client, update_client
 from app.exceptions.user import *
+from app.services.phone_validation import is_valid_phone, format_phone
 
 
 #RENAME 
@@ -30,7 +31,7 @@ def rename_user(session , userID , f_name, l_name):
     except:
         session.rollback()
         raise
-    
+
 def update_phone(session, userID, phone):
     try:
         status, user = get_user(session=session, userID=userID)

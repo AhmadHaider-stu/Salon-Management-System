@@ -18,6 +18,8 @@ EMPLOYEE_NAV = [
 RECEPTION_NAV = [
     {"key": "calendar", "href": "/reception/calendar", "label": "Calendar", "icon": "calendar"},
     {"key": "appointments", "href": "/reception/appointments", "label": "Appointments", "icon": "appointments"},
+    {"key": "employees", "href": "/reception/employees", "label": "Employees", "icon": "employees"},
+    {"key": "clients", "href": "/reception/clients", "label": "Clients", "icon": "clients"},
     {"key": "services", "href": "/reception/services", "label": "Services", "icon": "services"},
     {"key": "me", "href": "/me", "label": "Me", "icon": "me"},
 ]
@@ -26,6 +28,8 @@ ADMIN_NAV = [
     {"key": "dashboard", "href": "/admin/dashboard", "label": "Dashboard", "icon": "dashboard"},
     {"key": "calendar", "href": "/reception/calendar", "label": "Calendar", "icon": "calendar"},
     {"key": "appointments", "href": "/reception/appointments", "label": "Appointments", "icon": "appointments"},
+    {"key": "employees", "href": "/reception/employees", "label": "Employees", "icon": "employees"},
+    {"key": "clients", "href": "/reception/clients", "label": "Clients", "icon": "clients"},
     {"key": "services", "href": "/reception/services", "label": "Services", "icon": "services"},
     {"key": "me", "href": "/me", "label": "Me", "icon": "me"},
 ]

@@ -35,6 +35,7 @@
   var ownEmployeeId = {{ own_employee_id if own_employee_id else 'null' }};
   var currentView = 'day';
   var serviceMap = {};
+  var clientMap = {};
 
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function todayStr() {
@@ -43,6 +44,13 @@
   }
   function formatTime(iso) {
     return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function loadClientMap() {
+    if (!isStaff) return;
+    var res = await fetch('/client');
+    var clients = await res.json();
+    clients.forEach(function (c) { clientMap[c.id] = c.f_name + ' ' + c.l_name; });
   }
 
   async function loadServiceMap() {
@@ -113,11 +121,12 @@
     appointments.forEach(function (a) {
       var card = document.createElement('div');
       card.className = 'cal-card';
+      var clientName = clientMap[a.client_id] || (a.phone || 'Unknown client');
       card.innerHTML =
         '<div class="cal-card-top">' +
           '<div>' +
             '<div class="cal-card-time">' + formatTime(a.start_time) + ' – ' + formatTime(a.end_time) + '</div>' +
-            '<div class="cal-card-sub">' + (a.phone || 'No phone on file') + '</div>' +
+            '<div class="cal-card-sub">' + clientName + (a.phone ? ' · ' + a.phone : '') + '</div>' +
           '</div>' +
           '<div class="cal-card-price">AED ' + Number(a.total_price).toFixed(0) + '</div>' +
         '</div>';
@@ -139,11 +148,12 @@
     services.forEach(function (s) {
       var card = document.createElement('div');
       card.className = 'cal-card';
+      var clientName = s.client_name || 'Unknown client';
       card.innerHTML =
         '<div class="cal-card-top">' +
           '<div>' +
             '<div class="cal-card-time">' + formatTime(s.start_time) + ' – ' + formatTime(s.end_time) + '</div>' +
-            '<div class="cal-card-sub">' + (serviceMap[s.service_id] || 'Service') + '</div>' +
+            '<div class="cal-card-sub">' + clientName + ' · ' + (serviceMap[s.service_id] || 'Service') + '</div>' +
           '</div>' +
           '<div class="cal-card-price">AED ' + Number(s.price).toFixed(0) + '</div>' +
         '</div>';
@@ -228,7 +238,15 @@
 
   (async function init() {
     await loadServiceMap();
+    await loadClientMap();
     await loadEmployeeOptions();
+
+    var params = new URLSearchParams(window.location.search);
+    var preselect = params.get('employee');
+    if (isStaff && preselect) {
+      document.getElementById('employeeSelect').value = preselect;
+    }
+
     refresh();
   })();
 </script>
