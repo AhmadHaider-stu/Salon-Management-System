@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Our Stylists · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">Our stylists</div>
+  <div class="page-sub">Meet the team.</div>
+
+  <div id="stylistList"></div>
+</div>
+
+<script>
+  function phoneHref(phone) {
+    return 'tel:' + phone.replace(/[^0-9+]/g, '');
+  }
+
+  async function loadStylists() {
+    var res = await fetch('/employee/all');
+    var employees = await res.json();
+    var active = employees.filter(function (e) { return e.active; });
+
+    var list = document.getElementById('stylistList');
+    list.innerHTML = '';
+
+    if (active.length === 0) {
+      list.innerHTML = '<div class="cart-empty">No stylists to show yet</div>';
+      return;
+    }
+
+    for (var i = 0; i < active.length; i++) {
+      list.appendChild(await buildStylistCard(active[i]));
+    }
+  }
+
+  async function buildStylistCard(emp) {
+    var servicesRes = await fetch('/employee/' + emp.id + '/services');
+    var services = await servicesRes.json();
+
+    var card = document.createElement('div');
+    card.className = 'stylist-card';
+
+    var photoHtml = emp.photo
+      ? '<img src="' + emp.photo + '" alt="" class="stylist-photo" />'
+      : '<div class="stylist-photo-fallback">' + emp.f_name[0] + '</div>';
+
+    var chipsHtml = services.map(function (s) {
+      return '<span class="service-chip">' + s.description + '</span>';
+    }).join('');
+
+    var contactHtml = '';
+    if (emp.phone) {
+      contactHtml +=
+        '<a href="' + phoneHref(emp.phone) + '" class="stylist-contact-link">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>' +
+          emp.phone +
+        '</a>';
+    }
+    if (emp.socialMedia) {
+      contactHtml +=
+        '<a href="' + emp.socialMedia + '" target="_blank" rel="noopener" class="stylist-contact-link">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>' +
+          'Instagram' +
+        '</a>';
+    }
+
+    var servicesId = 'chips-' + emp.id;
+    var servicesHtml = '';
+    if (services.length > 0) {
+      servicesHtml =
+        '<div class="services-toggle-row" id="toggle-' + emp.id + '">' +
+          '<span class="services-toggle-label">Services (' + services.length + ')</span>' +
+          '<svg class="cal-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '</div>' +
+        '<div class="chip-list" id="' + servicesId + '">' + chipsHtml + '</div>';
+    }
+
+    card.innerHTML =
+      '<div class="stylist-card-header">' +
+        photoHtml +
+        '<div>' +
+          '<div class="stylist-card-name">' + emp.f_name + ' ' + emp.l_name + '</div>' +
+        '</div>' +
+      '</div>' +
+      (emp.bio ? '<div class="stylist-bio">' + emp.bio + '</div>' : '') +
+      (contactHtml ? '<div class="stylist-contact-row">' + contactHtml + '</div>' : '') +
+      servicesHtml;
+
+    var toggleRow = card.querySelector('#toggle-' + emp.id);
+    if (toggleRow) {
+      toggleRow.addEventListener('click', function () {
+        var list = document.getElementById(servicesId);
+        var isOpen = list.classList.toggle('open');
+        toggleRow.querySelector('.cal-card-chevron').style.transform = isOpen ? 'rotate(180deg)' : '';
+      });
+    }
+
+    return card;
+  }
+
+  loadStylists();
+</script>
+{% endblock %}

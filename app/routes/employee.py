@@ -2,6 +2,7 @@ from fastapi import APIRouter , Depends , HTTPException , UploadFile, File
 
 from app.schemas.employee import *
 from app.schemas.employee_schedule import *
+from app.schemas.service import ServiceResponse
 from app.dependencies import get_db  , require_self_receptionist_or_admin , require_receptionist_or_admin 
 from app.business.employee_logic import *
 
@@ -26,8 +27,8 @@ from app.enums.enum import Role
 
 router = APIRouter(prefix='/employee' ,tags=['employee'])
 
-@router.get('/all',dependencies=[Depends(require_receptionist_or_admin)] )
-def get_all_employees(db : dict = Depends(get_db)):
+@router.get('/all', response_model=list[EmployeeResponse])
+def get_all_employees(db: dict = Depends(get_db)):
     return get_employees(session=db)
 
 @router.get('/{employeeID}',dependencies=[Depends(require_self_receptionist_or_admin)] , summary='Get specific employee' ,  response_model=EmployeeResponse)
@@ -37,13 +38,9 @@ def get_employee(employeeID:int,db:dict = Depends(get_db)):
         raise HTTPException(status_code=404 , detail= 'Employee not found')
     return employee
 
-@router.get('/{employeeID}/services' , dependencies=[Depends(require_receptionist_or_admin)], summary="Get employee's services")
-def get_employee_services(employeeID:int , db:dict = Depends(get_db)):
-    status, employee = crud_get_employee(session = db,employeeID=employeeID)
-    if (status == 'FAIL'):
-        raise HTTPException(status_code=404 , detail= 'Employee not found')
-    services = get_services_by_employee(session=db , employeeID=employee.id)
-    return services
+@router.get('/{employeeID}/services', summary="Get employee's services", response_model=list[ServiceResponse])
+def get_employee_services(employeeID: int, db: dict = Depends(get_db)):
+    return get_services_by_employee(session=db, employeeID=employeeID)
 
 
 @router.get('/{employeeID}/schedule', dependencies=[Depends(require_self_receptionist_or_admin)], summary='Get weekly schedule')

@@ -132,6 +132,18 @@ def reception_services(request: Request, user=Depends(get_current_user)):
     })
 
 
+@router.get('/stylists')
+def stylists_page(request: Request, user=Depends(get_current_user)):
+    if user.role != Role.CLIENT:
+        return RedirectResponse(get_role_home(user.role))
+    return templates.TemplateResponse(request=request, name="stylists.html", context={
+        "user": user,
+        "active_page": "stylists",
+        "nav_links": get_nav_links(Role.CLIENT),
+        "brand_href": "/home",
+    })
+
+
 @router.get('/services')
 def client_services_page(request: Request, user=Depends(get_current_user)):
     if user.role != Role.CLIENT:

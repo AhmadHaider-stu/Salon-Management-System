@@ -28,6 +28,52 @@
   <div id="calendarBody"></div>
 </div>
 
+{% if is_staff %}
+<button type="button" class="fab-btn" id="newApptFab" aria-label="New appointment">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<div class="modal-overlay" id="walkinOverlay">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <div class="page-title" style="font-size:18px;margin-bottom:0;">New appointment</div>
+      <button type="button" class="modal-close-btn" id="walkinCloseBtn">&times;</button>
+    </div>
+
+    <div id="walkinError" style="display:none;" class="error-banner"></div>
+
+    <div class="section-title">Client</div>
+    <div class="field-group">
+      <input type="text" id="wiFirstName" class="field-input" style="font-family: var(--font-body);" placeholder="First name" />
+    </div>
+    <div class="field-group">
+      <input type="text" id="wiLastName" class="field-input" style="font-family: var(--font-body);" placeholder="Last name" />
+    </div>
+    <div class="field-group">
+      <input type="tel" id="wiPhone" class="field-input" inputmode="numeric" pattern="[0-9+]*" style="font-family: var(--font-body);" placeholder="Phone number" />
+    </div>
+
+    <div class="section-title" style="margin-top:20px;">Services</div>
+    <div id="wiServicesList"></div>
+
+    <div class="section-title" style="margin-top:20px;">Cart</div>
+    <div id="wiCartList"><div class="cart-empty">No services added yet</div></div>
+
+    <div class="date-field">
+      <div class="section-title">Choose date</div>
+      <input type="date" id="wiDateInput" class="field-input" style="font-family: var(--font-body);" />
+    </div>
+
+    <div class="date-field" id="wiSlotsSection" style="display:none;">
+      <div class="section-title">Available times</div>
+      <div id="wiSlotsGrid" class="slots-grid"></div>
+    </div>
+
+    <button type="button" class="btn btn-primary" id="wiSubmitBtn" style="margin-top:16px;">Create appointment</button>
+  </div>
+</div>
+{% endif %}
+
 <script>
   {% set is_staff = is_staff | default(false) %}
   {% set own_employee_id = own_employee_id | default(none) %}
@@ -232,6 +278,217 @@
   document.getElementById('calDate').addEventListener('change', refresh);
   if (isStaff) {
     document.getElementById('employeeSelect').addEventListener('change', refresh);
+  }
+
+  var wiCart = [];
+  var wiSelectedSlot = null;
+
+  function openWalkinModal() {
+    wiCart = [];
+    wiSelectedSlot = null;
+    document.getElementById('wiFirstName').value = '';
+    document.getElementById('wiLastName').value = '';
+    document.getElementById('wiPhone').value = '';
+    document.getElementById('wiDateInput').value = '';
+    document.getElementById('wiSlotsSection').style.display = 'none';
+    document.getElementById('walkinError').style.display = 'none';
+    renderWiCart();
+    loadWiServices();
+    document.getElementById('walkinOverlay').classList.add('visible');
+  }
+
+  function closeWalkinModal() {
+    document.getElementById('walkinOverlay').classList.remove('visible');
+  }
+
+  async function loadWiServices() {
+    var res = await fetch('/service/all');
+    var services = await res.json();
+    var byCategory = {};
+    services.forEach(function (s) {
+      if (!s.active) return;
+      if (!byCategory[s.category]) byCategory[s.category] = [];
+      byCategory[s.category].push(s);
+    });
+    var container = document.getElementById('wiServicesList');
+    container.innerHTML = '';
+    Object.keys(byCategory).forEach(function (category) {
+      var title = document.createElement('div');
+      title.className = 'category-title';
+      title.textContent = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+      container.appendChild(title);
+      byCategory[category].forEach(function (service) {
+        container.appendChild(buildWiServiceRow(service));
+      });
+    });
+  }
+
+  function buildWiServiceRow(service) {
+    var row = document.createElement('div');
+    row.className = 'service-row';
+    row.innerHTML =
+      '<div class="service-row-main">' +
+        '<div>' +
+          '<div class="service-name">' + service.description + '</div>' +
+          '<div class="service-meta">' + service.time_duration + ' min</div>' +
+        '</div>' +
+        '<div style="display:flex;align-items:center;gap:12px;">' +
+          '<div class="service-price">AED ' + Number(service.price).toFixed(0) + '</div>' +
+          '<button class="add-btn" type="button" aria-label="Add">+</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="employee-picker">' +
+        '<select><option value="">Loading stylists...</option></select>' +
+        '<button type="button" class="confirm-add-btn">Add to cart</button>' +
+      '</div>';
+
+    var addBtn = row.querySelector('.add-btn');
+    var picker = row.querySelector('.employee-picker');
+    var select = row.querySelector('select');
+    var confirmBtn = row.querySelector('.confirm-add-btn');
+    var loaded = false;
+
+    addBtn.addEventListener('click', async function () {
+      picker.classList.toggle('open');
+      if (picker.classList.contains('open') && !loaded) {
+        loaded = true;
+        var res = await fetch('/service/' + service.id + '/employees');
+        var employees = await res.json();
+        select.innerHTML = employees.length === 0
+          ? '<option value="">No stylist available</option>'
+          : employees.map(function (e) { return '<option value="' + e.id + '">' + e.f_name + ' ' + e.l_name + '</option>'; }).join('');
+      }
+    });
+
+    confirmBtn.addEventListener('click', function () {
+      var employeeId = select.value;
+      if (!employeeId) return;
+      wiCart.push({
+        service_id: service.id,
+        employee_id: parseInt(employeeId, 10),
+        name: service.description,
+        employee_name: select.options[select.selectedIndex].textContent,
+        price: service.price
+      });
+      picker.classList.remove('open');
+      renderWiCart();
+    });
+
+    return row;
+  }
+
+  function renderWiCart() {
+    var list = document.getElementById('wiCartList');
+    if (wiCart.length === 0) {
+      list.innerHTML = '<div class="cart-empty">No services added yet</div>';
+      document.getElementById('wiSlotsSection').style.display = 'none';
+      return;
+    }
+    list.innerHTML = '';
+    wiCart.forEach(function (item, index) {
+      var el = document.createElement('div');
+      el.className = 'cart-item';
+      el.innerHTML =
+        '<div>' +
+          '<div class="cart-item-name">' + item.name + '</div>' +
+          '<div class="cart-item-sub">with ' + item.employee_name + '</div>' +
+        '</div>' +
+        '<div class="cart-item-right">' +
+          '<div class="cart-item-price">AED ' + Number(item.price).toFixed(0) + '</div>' +
+          '<button class="remove-btn" type="button" data-index="' + index + '">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+          '</button>' +
+        '</div>';
+      list.appendChild(el);
+    });
+    list.querySelectorAll('.remove-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        wiCart.splice(parseInt(btn.getAttribute('data-index'), 10), 1);
+        renderWiCart();
+      });
+    });
+    if (document.getElementById('wiDateInput').value) refreshWiSlots();
+  }
+
+  async function refreshWiSlots() {
+    var dateVal = document.getElementById('wiDateInput').value;
+    var section = document.getElementById('wiSlotsSection');
+    var grid = document.getElementById('wiSlotsGrid');
+    wiSelectedSlot = null;
+    if (!dateVal || wiCart.length === 0) { section.style.display = 'none'; return; }
+
+    var payload = {
+      services: wiCart.map(function (item) { return { employee_id: item.employee_id, service_id: item.service_id }; }),
+      date: dateVal
+    };
+    var res = await fetch('/appointment/availability', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    var data = await res.json();
+    section.style.display = 'block';
+    grid.innerHTML = '';
+    if (!data.slots || data.slots.length === 0) {
+      grid.innerHTML = '<div class="slots-empty">No times available this day.</div>';
+      return;
+    }
+    data.slots.forEach(function (iso) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slot-btn';
+      btn.textContent = new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+      btn.addEventListener('click', function () {
+        grid.querySelectorAll('.slot-btn').forEach(function (b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        wiSelectedSlot = iso;
+      });
+      grid.appendChild(btn);
+    });
+  }
+
+  function showWiError(msg) {
+    var el = document.getElementById('walkinError');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  if (isStaff) {
+    document.getElementById('newApptFab').addEventListener('click', openWalkinModal);
+    document.getElementById('walkinCloseBtn').addEventListener('click', closeWalkinModal);
+    document.getElementById('wiDateInput').addEventListener('change', refreshWiSlots);
+
+    document.getElementById('wiSubmitBtn').addEventListener('click', async function () {
+      document.getElementById('walkinError').style.display = 'none';
+
+      var fName = document.getElementById('wiFirstName').value.trim();
+      var lName = document.getElementById('wiLastName').value.trim();
+      var phone = document.getElementById('wiPhone').value.trim();
+
+      if (!fName || !lName || !phone) { showWiError("Fill in the client's name and phone."); return; }
+      if (wiCart.length === 0) { showWiError('Add at least one service.'); return; }
+      if (!wiSelectedSlot) { showWiError('Choose an available time.'); return; }
+
+      var payload = {
+        client: { f_name: fName, l_name: lName, phone: phone },
+        services: wiCart.map(function (item) { return { employee_id: item.employee_id, service_id: item.service_id }; }),
+        start_time: wiSelectedSlot
+      };
+
+      var res = await fetch('/appointment/walk-in', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        var err = await res.json();
+        showWiError(err.detail || 'Could not create this appointment.');
+        return;
+      }
+
+      var data = await res.json();
+      await fetch('/appointment/' + data.appointment.id + '/status?status=confirmed', { method: 'PUT' });
+
+      closeWalkinModal();
+      refresh();
+    });
   }
 
   document.getElementById('calDate').value = todayStr();

@@ -32,7 +32,7 @@ def send_confirmation_emails(session, appointmentID):
                     "New Appointment Confirmed",
                     f"Hi {employee.f_name}, you have a confirmed booking at {entry.start_time}."
                 )
-                entry.reminder = True
+                # entry.reminder = True
 
 
 def send_completion_email(session, appointmentID):
