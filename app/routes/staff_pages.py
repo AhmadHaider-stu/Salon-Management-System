@@ -5,7 +5,7 @@ from app.dependencies import get_db, get_current_user
 from app.enums.enum import Role
 from app.frontend.role_routing import get_nav_links, get_role_home
 
-router = APIRouter()
+router = APIRouter(tags=['staff pages'])
 templates = Jinja2Templates(directory='app/frontend/templates')
 
 
@@ -34,6 +34,18 @@ def employee_calendar(request: Request, user=Depends(get_current_user)):
         "brand_href": get_role_home(user.role),
         "is_staff": False,
         "own_employee_id": user.employee_id,
+    })
+
+
+@router.get('/admin/roles')
+def admin_roles(request: Request, user=Depends(get_current_user)):
+    if user.role != Role.ADMIN:
+        return RedirectResponse(get_role_home(user.role))
+    return templates.TemplateResponse(request=request, name="admin_roles.html", context={
+        "user": user,
+        "active_page": "dashboard",
+        "nav_links": get_nav_links(user.role),
+        "brand_href": get_role_home(user.role),
     })
 
 

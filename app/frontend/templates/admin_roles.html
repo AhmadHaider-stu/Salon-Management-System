@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Roles · Hair Lounge{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="page-title">Roles</div>
+  <div class="page-sub">Promote clients to staff, or change staff roles.</div>
+
+  <div id="pageError" style="display:none;" class="error-banner"></div>
+
+  <div class="field-group">
+    <input type="text" id="userSearch" class="field-input" style="font-family: var(--font-body);"
+      placeholder="Search by name or email" />
+  </div>
+
+  <div id="userList"></div>
+</div>
+
+<script>
+  var allUsers = [];
+  var currentUserId = {{ user.id }};
+
+  function showError(message) {
+    var el = document.getElementById('pageError');
+    el.textContent = message;
+    el.style.display = 'block';
+  }
+  function clearError() {
+    document.getElementById('pageError').style.display = 'none';
+  }
+
+  function roleBadgeClass(role) {
+    return 'status-badge role-badge-' + role;
+  }
+  function roleLabel(role) {
+    var labels = { client: 'Client', employee: 'Employee', reception: 'Receptionist', admin: 'Admin' };
+    return labels[role] || role;
+  }
+
+  async function loadUsers() {
+    clearError();
+    var res = await fetch('/user/all');
+    allUsers = await res.json();
+    renderUsers();
+  }
+
+  function renderUsers() {
+    var query = document.getElementById('userSearch').value.trim().toLowerCase();
+    var filtered = allUsers.filter(function (u) {
+      if (!query) return true;
+      var name = (u.f_name + ' ' + u.l_name).toLowerCase();
+      var email = (u.email || '').toLowerCase();
+      return name.indexOf(query) !== -1 || email.indexOf(query) !== -1;
+    });
+
+    var list = document.getElementById('userList');
+    list.innerHTML = '';
+
+    if (filtered.length === 0) {
+      list.innerHTML = '<div class="cart-empty">No users found</div>';
+      return;
+    }
+
+    filtered.forEach(function (u) {
+      list.appendChild(buildUserCard(u));
+    });
+  }
+
+  function buildUserCard(u) {
+    var card = document.createElement('div');
+    card.className = 'cal-card';
+
+    var role = u.role.toLowerCase();
+    var actionsHtml = '';
+
+    if (role === 'client') {
+      actionsHtml = '<button type="button" class="role-action-btn primary" data-action="make_employee">Promote to employee</button>';
+    } else if (role === 'employee') {
+      actionsHtml =
+        '<button type="button" class="role-action-btn primary" data-action="make_receptionist">Make receptionist</button>' +
+        '<button type="button" class="role-action-btn primary" data-action="make_admin">Make admin</button>' +
+        '<button type="button" class="role-action-btn" data-action="delete_employee">Remove as employee</button>';
+    } else if (role === 'receptionist') {
+      actionsHtml = '<button type="button" class="role-action-btn" data-action="delete_receptionist">Remove as receptionist</button>';
+    } else if (role === 'admin') {
+      actionsHtml = u.id === currentUserId
+        ? '<div class="card-readonly-line">This is you</div>'
+        : '<button type="button" class="role-action-btn" data-action="delete_admin">Remove as admin</button>';
+    }
+
+    card.innerHTML =
+      '<div class="cal-card-top">' +
+      '<div>' +
+      '<div class="cal-card-time">' + u.f_name + ' ' + u.l_name + '</div>' +
+      '<div class="cal-card-sub">' + (u.email || 'No email') + '</div>' +
+      '</div>' +
+      '<span class="' + roleBadgeClass(role) + '">' + roleLabel(role) + '</span>' +
+      '</div>' +
+      '<div class="role-actions">' + actionsHtml + '</div>';
+
+    card.querySelectorAll('.role-action-btn[data-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        performRoleAction(btn.getAttribute('data-action'), u.id);
+      });
+    });
+
+    return card;
+  }
+
+  var ACTION_CONFIG = {
+    make_employee: { method: 'POST', path: '/role/make_employee/' },
+    make_receptionist: { method: 'PUT', path: '/role/make_receptionist/' },
+    make_admin: { method: 'PUT', path: '/role/make_admin/' },
+    delete_employee: { method: 'DELETE', path: '/role/delete_employee/', confirmMsg: 'Remove this person as an employee? They will become a plain client.' },
+    delete_receptionist: { method: 'DELETE', path: '/role/delete_receptionist/', confirmMsg: 'Remove this person as receptionist? They will return to being an employee.' },
+    delete_admin: { method: 'DELETE', path: '/role/delete_admin/', confirmMsg: 'Remove this person as admin? They will return to being an employee.' }
+  };
+
+  function extractErrorMessage(data) {
+    if (!data || !data.detail) return 'Could not complete this action.';
+    if (typeof data.detail === 'string') return data.detail;
+    if (Array.isArray(data.detail)) {
+      return data.detail.map(function (e) { return e.msg || JSON.stringify(e); }).join(', ');
+    }
+    return 'Could not complete this action.';
+  }
+
+  async function performRoleAction(action, userId) {
+    var config = ACTION_CONFIG[action];
+    if (config.confirmMsg && !confirm(config.confirmMsg)) return;
+
+    clearError();
+    var res = await fetch(config.path + userId, { method: config.method });
+
+    if (res.ok) {
+      loadUsers();
+    } else {
+      var data = await res.json();
+      showError(extractErrorMessage(data));
+    }
+  }
+
+  document.getElementById('userSearch').addEventListener('input', renderUsers);
+
+  loadUsers();
+</script>
+{% endblock %}

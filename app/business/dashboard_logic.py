@@ -73,6 +73,7 @@ def get_appointments_by_hour(session, date):
     appointments = session.query(Appointment).filter(
         Appointment.start_time >= day_start,
         Appointment.start_time <= day_end,
+        Appointment.status.in_([AppointmentStatus.COMPLETED ,AppointmentStatus.CONFIRMED, AppointmentStatus.PENDING])
     ).all()
 
     buckets = {str(h): 0 for h in range(24)}

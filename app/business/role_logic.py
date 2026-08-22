@@ -55,7 +55,7 @@ def make_employee(session , current_user, userID):
     try:
         check_admin(current_user)
         user=get_user_or_raise(session=session,userID=userID)
-        if (user[1].role != Role.CLIENT):
+        if (user[1].role == Role.EMPLOYEE):
             raise IsEmployee()
         user = user[1]
         
@@ -105,7 +105,7 @@ def delete_employee(session, current_user, userID):
         email = employee.email
         del_employee(session=session, employee=employee)
         user.employee_id = None
-        client = register_client(session=session, f_name=user.f_name, l_name=user.l_name, email=email)
+        client = register_client(session=session, f_name=user.f_name, l_name=user.l_name, email=email , phone=user.phone)
         user.role = Role.CLIENT
         user.client_id = client.id
         session.commit()

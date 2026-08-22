@@ -7,9 +7,9 @@ from app.schemas.employee import EmployeeResponse
 router = APIRouter(prefix='/role' , tags=['role-manipulation'])
 
 @router.post('/make_employee/{userID}' , dependencies=[Depends(require_admin)],summary='Add new employee' )
-def add_employee(userID : int, phone:str, db :dict = Depends(get_db) , user : dict = Depends(get_current_user)):
+def add_employee(userID : int, db :dict = Depends(get_db) , user : dict = Depends(get_current_user)):
         try:    
-            return make_employee(session=db ,current_user=user ,userID=userID,phone = phone)
+            return make_employee(session=db ,current_user=user ,userID=userID)
         except IsNotAdmin:
             raise HTTPException(status_code=403 , detail='You are not allowed')
         except IsClient:
