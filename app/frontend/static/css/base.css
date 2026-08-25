@@ -1150,7 +1150,7 @@ body.nav-hidden .bottom-nav {
 }
 
 .cal-card.clickable {
-  cursor: pointer;
+  cursor: default;
 }
 
 .cal-card-chevron {
@@ -1160,6 +1160,32 @@ body.nav-hidden .bottom-nav {
 }
 
 .cal-card.open .cal-card-chevron {
+  transform: rotate(180deg);
+}
+
+.card-expand-btn {
+  background: none;
+  border: none;
+  padding: 10px;
+  margin: -10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.card-expand-btn:hover {
+  background: var(--paper);
+}
+
+.card-expand-btn svg {
+  transition: transform 0.15s ease;
+}
+
+.card-expand-btn.open svg {
   transform: rotate(180deg);
 }
 
@@ -1182,7 +1208,7 @@ body.nav-hidden .bottom-nav {
   font-size: 13px;
 }
 
-.appt-service-line+.appt-service-line {
+.appt-service-line + .appt-service-line {
   border-top: 1px solid var(--line);
 }
 
@@ -1597,7 +1623,7 @@ body.nav-hidden .bottom-nav {
   flex-wrap: wrap;
 }
 
-.schedule-day-row+.schedule-day-row {
+.schedule-day-row + .schedule-day-row {
   border-top: 1px solid var(--line);
 }
 
@@ -1705,7 +1731,7 @@ body.nav-hidden .bottom-nav {
   padding: 8px 0;
 }
 
-.appt-detail-service+.appt-detail-service {
+.appt-detail-service + .appt-detail-service {
   border-top: 1px solid var(--line);
 }
 

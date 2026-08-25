@@ -97,7 +97,7 @@
         '</div>' +
         '<div style="display:flex;align-items:center;gap:10px;">' +
           '<span class="' + statusBadgeClass(appointment.status) + '">' + appointment.status + '</span>' +
-          '<svg class="cal-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+          '<button type="button" class="card-expand-btn" aria-label="Expand appointment"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>' +
         '</div>' +
       '</div>' +
       '<div class="cal-card-price" style="margin-top:6px;">' + formatPrice(appointment.total_price) + '</div>' +
@@ -105,10 +105,11 @@
 
     var loaded = false;
     var detail = card.querySelector('.appt-detail');
+    var expandBtn = card.querySelector('.card-expand-btn');
 
-    card.addEventListener('click', async function () {
-      var isOpen = card.classList.toggle('open');
-      detail.classList.toggle('open', isOpen);
+    expandBtn.addEventListener('click', async function () {
+      var isOpen = detail.classList.toggle('open');
+      expandBtn.classList.toggle('open', isOpen);
       if (isOpen && !loaded) {
         loaded = true;
         detail.innerHTML = '<div class="cal-card-sub">Loading…</div>';

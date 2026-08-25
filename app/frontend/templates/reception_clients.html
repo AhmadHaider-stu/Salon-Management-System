@@ -58,16 +58,19 @@
           '<div class="cal-card-time">' + client.f_name + ' ' + client.l_name + '</div>' +
           '<div class="cal-card-sub">' + (client.phone || '—') + (client.email ? ' · ' + client.email : '') + '</div>' +
         '</div>' +
-        '<svg class="cal-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '<button type="button" class="card-expand-btn" aria-label="Expand client">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
+        '</button>' +
       '</div>' +
       '<div class="appt-detail"></div>';
 
     var detail = card.querySelector('.appt-detail');
+    var expandBtn = card.querySelector('.card-expand-btn');
     var loaded = false;
 
-    card.addEventListener('click', async function () {
-      var isOpen = card.classList.toggle('open');
-      detail.classList.toggle('open', isOpen);
+    expandBtn.addEventListener('click', async function () {
+      var isOpen = detail.classList.toggle('open');
+      expandBtn.classList.toggle('open', isOpen);
       if (isOpen && !loaded) {
         loaded = true;
         await loadClientAppointments(client.id, detail);

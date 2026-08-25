@@ -71,18 +71,22 @@
             '<div class="cal-card-sub">' + (emp.phone || 'No phone') + '</div>' +
           '</div>' +
         '</div>' +
-        '<span class="status-badge ' + (emp.active ? 'status-active' : 'status-inactive') + '">' +
-          (emp.active ? 'Active' : 'Inactive') +
-        '</span>' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<span class="status-badge ' + (emp.active ? 'status-active' : 'status-inactive') + '">' +
+            (emp.active ? 'Active' : 'Inactive') +
+          '</span>' +
+          '<button type="button" class="card-expand-btn" aria-label="Expand employee"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>' +
+        '</div>' +
       '</div>' +
       '<div class="appt-detail" id="emp-detail-' + emp.id + '"></div>';
 
     var detail = card.querySelector('.appt-detail');
+    var expandBtn = card.querySelector('.card-expand-btn');
     var loaded = false;
 
-    card.addEventListener('click', function () {
-      var isOpen = card.classList.toggle('open');
-      detail.classList.toggle('open', isOpen);
+    expandBtn.addEventListener('click', function () {
+      var isOpen = detail.classList.toggle('open');
+      expandBtn.classList.toggle('open', isOpen);
       if (isOpen && !loaded) {
         loaded = true;
         buildEmployeeDetail(emp, detail);
@@ -169,8 +173,8 @@
     detail.querySelector('.emp-save-profile-btn').addEventListener('click', async function () {
       clearError();
       var payload = {
-        bio: detail.querySelector('.emp-bio').value,
-        socialMedia: detail.querySelector('.emp-social').value,
+        bio: detail.querySelector('.emp-bio').value || null,
+        socialMedia: detail.querySelector('.emp-social').value || null,
         active: detail.querySelector('.emp-active').checked
       };
       var res = await fetch('/employee/' + emp.id, {

@@ -180,27 +180,21 @@
 
     var statusCell = card.querySelector('.status-cell');
     statusCell.appendChild(statusSelect(appt.id, appt.status));
-    var chevron = document.createElement('svg');
-    chevron.setAttribute('class', 'cal-card-chevron');
-    chevron.setAttribute('width', '16');
-    chevron.setAttribute('height', '16');
-    chevron.setAttribute('viewBox', '0 0 24 24');
-    chevron.setAttribute('fill', 'none');
-    chevron.setAttribute('stroke', 'currentColor');
-    chevron.setAttribute('stroke-width', '2');
-    chevron.setAttribute('stroke-linecap', 'round');
-    chevron.setAttribute('stroke-linejoin', 'round');
-    chevron.innerHTML = '<polyline points="6 9 12 15 18 9"/>';
-    statusCell.appendChild(chevron);
+    var expandBtn = document.createElement('button');
+    expandBtn.type = 'button';
+    expandBtn.className = 'card-expand-btn';
+    expandBtn.setAttribute('aria-label', 'Expand appointment');
+    expandBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+    statusCell.appendChild(expandBtn);
 
     var detail = card.querySelector('.appt-detail');
     var loaded = false;
     var selectedRescheduleSlot = null;
     var appointmentServices = [];
 
-    card.addEventListener('click', async function () {
-      var isOpen = card.classList.toggle('open');
-      detail.classList.toggle('open', isOpen);
+    expandBtn.addEventListener('click', async function () {
+      var isOpen = detail.classList.toggle('open');
+      expandBtn.classList.toggle('open', isOpen);
       if (isOpen && !loaded) {
         loaded = true;
         appointmentServices = await loadServicesForAppointment(appt.id, detail);
@@ -531,10 +525,15 @@
     }
 
     var data = await res.json();
-    await fetch('/appointment/' + data.appointment.id + '/status?status=confirmed', { method: 'PUT' });
+    var confirmRes = await fetch('/appointment/' + data.appointment.id + '/status?status=confirmed', { method: 'PUT' });
 
     closeWalkinModal();
     loadAppointments();
+
+    if (!confirmRes.ok) {
+      var confirmErr = await confirmRes.json();
+      showError('Appointment created, but could not send the confirmation: ' + (confirmErr.detail || confirmRes.status));
+    }
   });
 
   document.getElementById('apptDate').addEventListener('change', loadAppointments);
