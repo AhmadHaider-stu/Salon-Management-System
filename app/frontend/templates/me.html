@@ -25,8 +25,6 @@
       <label class="field-label" for="lNameField">Last name</label>
       <input type="text" id="lNameField" class="field-input" style="font-family: var(--font-body);" />
     </div>
-    <button type="button" class="me-save-btn" id="saveNameBtn">Save name</button>
-    <span class="me-save-status" id="nameStatus" style="display:none;">Saved</span>
   </div>
 
   <div class="me-section">
@@ -38,8 +36,6 @@
       <label class="field-label" for="phoneField">Phone</label>
       <input type="tel" id="phoneField" class="field-input" inputmode="numeric" pattern="[0-9+]*" style="font-family: var(--font-body);" />
     </div>
-    <button type="button" class="me-save-btn" id="savePhoneBtn">Save phone</button>
-    <span class="me-save-status" id="phoneNumStatus" style="display:none;"></span>
   </div>
 
   <div class="me-section" id="staffSection" style="display:none;">
@@ -52,11 +48,12 @@
       <label class="field-label" for="socialField">Instagram / Facebook link</label>
       <input type="text" id="socialField" class="field-input" style="font-family: var(--font-body);" placeholder="https://instagram.com/..." />
     </div>
-    <button type="button" class="me-save-btn" id="saveProfileBtn">Save profile</button>
-    <span class="me-save-status" id="profileStatus" style="display:none;">Saved</span>
   </div>
 
-  <div id="meError" style="display:none;" class="error-banner"></div>
+  <button type="button" class="me-save-btn" id="saveAllBtn">Save changes</button>
+  <span class="me-save-status" id="saveAllStatus" style="display:none;">Saved</span>
+
+  <div id="meError" style="display:none;" class="error-banner" style="margin-top: 16px;"></div>
 </div>
 
 <script>
@@ -73,6 +70,9 @@
     var el = document.getElementById('meError');
     el.textContent = message;
     el.style.display = 'block';
+  }
+  function clearError() {
+    document.getElementById('meError').style.display = 'none';
   }
 
   function renderAvatar(photoUrl, initials) {
@@ -111,9 +111,11 @@
     }
   }
 
-  document.getElementById('saveNameBtn').addEventListener('click', async function () {
-    document.getElementById('meError').style.display = 'none';
-    var res = await fetch('/user/rename', {
+  document.getElementById('saveAllBtn').addEventListener('click', async function () {
+    clearError();
+    var errors = [];
+
+    var nameRes = await fetch('/user/rename', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -121,46 +123,43 @@
         l_name: document.getElementById('lNameField').value
       })
     });
-    if (res.ok) {
-      showStatus('nameStatus');
-    } else {
-      var data = await res.json();
-      showError(data.detail || 'Could not save name.');
+    if (!nameRes.ok) {
+      var nameErr = await nameRes.json();
+      errors.push('Name: ' + (nameErr.detail || 'could not save'));
     }
-  });
 
-  document.getElementById('savePhoneBtn').addEventListener('click', async function () {
-    document.getElementById('meError').style.display = 'none';
-    var res = await fetch('/user/update-phone', {
+    var phoneRes = await fetch('/user/update-phone', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone: document.getElementById('phoneField').value })
     });
-    if (res.ok) {
-      var updated = await res.json();
+    if (phoneRes.ok) {
+      var updated = await phoneRes.json();
       document.getElementById('phoneField').value = updated.phone;
-      showStatus('phoneNumStatus', 'Saved');
     } else {
-      var data = await res.json();
-      showError(data.detail || 'Could not save phone number.');
+      var phoneErr = await phoneRes.json();
+      errors.push('Phone: ' + (phoneErr.detail || 'could not save'));
     }
-  });
 
-  document.getElementById('saveProfileBtn').addEventListener('click', async function () {
-    document.getElementById('meError').style.display = 'none';
-    var res = await fetch('/employee/' + currentEmployeeId, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        bio: document.getElementById('bioField').value,
-        socialMedia: document.getElementById('socialField').value
-      })
-    });
-    if (res.ok) {
-      showStatus('profileStatus');
+    if (currentEmployeeId) {
+      var profileRes = await fetch('/employee/' + currentEmployeeId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bio: document.getElementById('bioField').value || null,
+          socialMedia: document.getElementById('socialField').value || null
+        })
+      });
+      if (!profileRes.ok) {
+        var profileErr = await profileRes.json();
+        errors.push('Profile: ' + (profileErr.detail || 'could not save'));
+      }
+    }
+
+    if (errors.length === 0) {
+      showStatus('saveAllStatus');
     } else {
-      var data = await res.json();
-      showError(data.detail || 'Could not save profile.');
+      showError(errors.join(' · '));
     }
   });
 
@@ -170,23 +169,32 @@
 
   document.getElementById('photoInput').addEventListener('change', async function () {
     var file = this.files[0];
-    if (!file || !currentEmployeeId) return;
+    if (!file) return;
+    if (!currentEmployeeId) {
+      showError('No employee record loaded — check that /user/me actually returns employee_id.');
+      return;
+    }
 
-    document.getElementById('meError').style.display = 'none';
+    clearError();
     var formData = new FormData();
     formData.append('file', file);
 
-    var res = await fetch('/employee/' + currentEmployeeId + '/photo', {
-      method: 'PUT',
-      body: formData
-    });
+    try {
+      var res = await fetch('/employee/' + currentEmployeeId + '/photo', {
+        method: 'PUT',
+        body: formData
+      });
 
-    if (res.ok) {
-      var data = await res.json();
-      renderAvatar(data.photo_url, '');
-      showStatus('photoStatus');
-    } else {
-      showError('Could not upload photo.');
+      if (res.ok) {
+        var data = await res.json();
+        renderAvatar(data.photo_url, '');
+        showStatus('photoStatus');
+      } else {
+        var errData = await res.json();
+        showError('Upload failed: ' + (errData.detail || res.status));
+      }
+    } catch (err) {
+      showError('Network error during upload: ' + err.message);
     }
   });
 

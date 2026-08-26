@@ -21,6 +21,25 @@
   box-sizing: border-box;
 }
 
+button,
+a,
+.clickable,
+.card-expand-btn,
+.month-day-row,
+.services-toggle-row,
+.tab-btn,
+.view-btn,
+.slot-btn,
+.nav-item,
+.nav-toggle,
+.logout-fixed-btn {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
 body {
   font-family: var(--font-body);
   background: var(--paper);
