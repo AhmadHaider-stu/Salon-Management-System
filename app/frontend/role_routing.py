@@ -13,11 +13,10 @@ EMPLOYEE_NAV = [
     {"key": "me", "href": "/me", "label": "Me", "icon": "me"},
 ]
 
-# Reception and admin share the same nav. Add employees/clients/appointments
-# back to this list one at a time as each is actually built.
+# Reception and admin share the same nav. Calendar now includes reschedule/reprice,
+# so it replaces the separate Appointments page entirely.
 RECEPTION_NAV = [
     {"key": "calendar", "href": "/reception/calendar", "label": "Calendar", "icon": "calendar"},
-    {"key": "appointments", "href": "/reception/appointments", "label": "Appointments", "icon": "appointments"},
     {"key": "employees", "href": "/reception/employees", "label": "Employees", "icon": "employees"},
     {"key": "clients", "href": "/reception/clients", "label": "Clients", "icon": "clients"},
     {"key": "services", "href": "/reception/services", "label": "Services", "icon": "services"},
@@ -27,7 +26,6 @@ RECEPTION_NAV = [
 ADMIN_NAV = [
     {"key": "dashboard", "href": "/admin/dashboard", "label": "Dashboard", "icon": "dashboard"},
     {"key": "calendar", "href": "/reception/calendar", "label": "Calendar", "icon": "calendar"},
-    {"key": "appointments", "href": "/reception/appointments", "label": "Appointments", "icon": "appointments"},
     {"key": "employees", "href": "/reception/employees", "label": "Employees", "icon": "employees"},
     {"key": "clients", "href": "/reception/clients", "label": "Clients", "icon": "clients"},
     {"key": "services", "href": "/reception/services", "label": "Services", "icon": "services"},

@@ -5,7 +5,7 @@ from app.dependencies import get_db, get_current_user
 from app.enums.enum import Role
 from app.frontend.role_routing import get_nav_links, get_role_home
 
-router = APIRouter(tags=['staff pages'])
+router = APIRouter()
 templates = Jinja2Templates(directory='app/frontend/templates')
 
 
@@ -97,15 +97,9 @@ def reception_clients(request: Request, user=Depends(get_current_user)):
 
 
 @router.get('/reception/appointments')
-def reception_appointments(request: Request, user=Depends(get_current_user)):
-    if user.role not in (Role.RECEPTION, Role.ADMIN):
-        return RedirectResponse(get_role_home(user.role))
-    return templates.TemplateResponse(request=request, name="reception_appointments.html", context={
-        "user": user,
-        "active_page": "appointments",
-        "nav_links": get_nav_links(user.role),
-        "brand_href": get_role_home(user.role),
-    })
+def reception_appointments_redirect(request: Request, user=Depends(get_current_user)):
+    # Merged into /reception/calendar - reschedule/reprice now live there for any appointment.
+    return RedirectResponse('/reception/calendar')
 
 
 @router.get('/reception/employees')
