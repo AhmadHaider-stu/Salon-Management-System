@@ -30,8 +30,7 @@ a,
 .tab-btn,
 .view-btn,
 .slot-btn,
-.nav-item,
-.logout-fixed-btn {
+.nav-item {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -505,51 +504,35 @@ body {
 }
 
 .app-body {
-  padding-bottom: 84px;
+  padding-top: 68px;
 }
 
-.logout-fixed-btn {
+.app-nav {
   position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 20;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--card);
-  border: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0;
-}
-
-.logout-fixed-btn svg {
-  width: 18px;
-  height: 18px;
-  color: var(--ink);
-}
-
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
+  top: 0;
   left: 0;
   right: 0;
   background: var(--card);
-  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   display: flex;
-  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
-  z-index: 10;
-  transition: transform 0.2s ease;
+  align-items: center;
+  gap: 4px;
+  padding: calc(8px + env(safe-area-inset-top)) 10px 8px;
+  z-index: 20;
+}
+
+.nav-items-scroll {
+  display: flex;
+  flex: 1 1 auto;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  gap: 2px;
 }
 
-.bottom-nav::-webkit-scrollbar {
+.nav-items-scroll::-webkit-scrollbar {
   display: none;
 }
 
@@ -606,25 +589,31 @@ body {
 
 @media (min-width: 768px) {
   .app-body {
-    padding-bottom: 0;
+    padding-top: 0;
     margin-left: 220px;
   }
 
-  .bottom-nav {
+  .app-nav {
     top: 0;
     bottom: 0;
     left: 0;
     right: auto;
     width: 220px;
+    height: auto;
     flex-direction: column;
     align-items: stretch;
     justify-content: flex-start;
-    border-top: none;
+    border-bottom: none;
     border-right: 1px solid var(--line);
     padding: 24px 14px 28px;
     gap: 4px;
+  }
+
+  .nav-items-scroll {
+    flex-direction: column;
     overflow: visible;
     scroll-snap-type: none;
+    gap: 4px;
   }
 
   .nav-brand {
@@ -1412,7 +1401,7 @@ body {
 
 .fab-btn {
   position: fixed;
-  bottom: 96px;
+  bottom: 24px;
   right: 20px;
   width: 52px;
   height: 52px;
@@ -1426,12 +1415,6 @@ body {
   cursor: pointer;
   z-index: 15;
   box-shadow: 0 4px 12px rgba(33, 28, 25, 0.2);
-}
-
-@media (min-width: 768px) {
-  .fab-btn {
-    bottom: 24px;
-  }
 }
 
 .modal-overlay {
