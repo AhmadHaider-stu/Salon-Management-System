@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>{% block title %}Hair Lounge{% endblock %}</title>
+  <title>{% block title %}Ayman Matar Salon{% endblock %}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
 </head>
@@ -10,8 +10,10 @@
 <body>
   {% from "_icons.html" import icon %}
 
+  <div class="demo-banner">Demo version — for testing purposes only</div>
+
   <nav class="app-nav">
-    <a href="{{ brand_href | default('/home') }}" class="nav-brand">Hair Lounge</a>
+    <a href="{{ brand_href | default('/home') }}" class="nav-brand">Ayman Matar Salon</a>
     <div class="nav-items-scroll">
       {% for link in nav_links | default([]) %}
       <a href="{{ link.href }}" class="nav-item {% if active_page == link.key %}active{% endif %}">

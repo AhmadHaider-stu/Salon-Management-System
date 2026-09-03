@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Calendar · Hair Lounge{% endblock %}
+{% block title %}Calendar · Ayman Matar Salon{% endblock %}
 
 {% block content %}
 <div class="page">
@@ -93,7 +93,7 @@
     return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   }
   function formatPrice(value) {
-    return 'AED ' + Number(value).toFixed(0);
+    return 'JD ' + Number(value).toFixed(0);
   }
 
   async function loadClientMap() {
@@ -487,7 +487,7 @@
           '<div class="service-meta">' + service.time_duration + ' min</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:12px;">' +
-          '<div class="service-price">AED ' + Number(service.price).toFixed(0) + '</div>' +
+          '<div class="service-price">JD ' + Number(service.price).toFixed(0) + '</div>' +
           '<button class="add-btn" type="button" aria-label="Add">+</button>' +
         '</div>' +
       '</div>' +
@@ -548,7 +548,7 @@
           '<div class="cart-item-sub">with ' + item.employee_name + '</div>' +
         '</div>' +
         '<div class="cart-item-right">' +
-          '<div class="cart-item-price">AED ' + Number(item.price).toFixed(0) + '</div>' +
+          '<div class="cart-item-price">JD ' + Number(item.price).toFixed(0) + '</div>' +
           '<button class="remove-btn" type="button" data-index="' + index + '">' +
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
           '</button>' +

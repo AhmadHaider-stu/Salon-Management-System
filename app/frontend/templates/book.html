@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Book · Hair Lounge{% endblock %}
+{% block title %}Book · Ayman Matar Salon{% endblock %}
 
 {% block content %}
 <div class="page">
@@ -35,7 +35,7 @@
 <div class="cart-bar" id="cartBar">
   <div>
     <div class="cart-bar-info" id="cartBarCount">0 services</div>
-    <div class="cart-bar-total" id="cartBarTotal">AED 0</div>
+    <div class="cart-bar-total" id="cartBarTotal">JD 0</div>
   </div>
   <button id="confirmBookingBtn">Book appointment</button>
 </div>
@@ -45,7 +45,7 @@
   var selectedSlot = null;
 
   function formatPrice(value) {
-    return 'AED ' + Number(value).toFixed(0);
+    return 'JD ' + Number(value).toFixed(0);
   }
 
   function formatTime(iso) {
@@ -281,3 +281,4 @@
   loadServices();
 </script>
 {% endblock %}
+

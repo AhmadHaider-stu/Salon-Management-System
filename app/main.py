@@ -19,6 +19,8 @@ from app.database import SessionLocal
 from app.business.reminders import send_pending_reminders
 from datetime import datetime
 import os 
+from zoneinfo import ZoneInfo
+now = datetime.now(ZoneInfo("Asia/Amman"))
 
 
 

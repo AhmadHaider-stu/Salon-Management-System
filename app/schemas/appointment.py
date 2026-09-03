@@ -3,6 +3,8 @@ from datetime import datetime
 from datetime import date as date_type
 from app.enums.enum import AppointmentStatus
 from typing import Optional
+from zoneinfo import ZoneInfo
+now = datetime.now(ZoneInfo("Asia/Amman"))
 class ServiceSelection(BaseModel):
     employee_id: int
     service_id: int

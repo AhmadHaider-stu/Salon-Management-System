@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Services · Hair Lounge{% endblock %}
+{% block title %}Services · Ayman Matar Salon{% endblock %}
 
 {% block content %}
 <div class="page">
@@ -21,7 +21,7 @@
       <input type="text" id="newDescription" class="field-input" style="font-family: var(--font-body);" maxlength="30" />
     </div>
     <div class="field-group">
-      <label class="field-label">Price (AED)</label>
+      <label class="field-label">Price (JD)</label>
       <input type="number" id="newPrice" class="field-input" style="font-family: var(--font-body);" min="10" max="500" />
     </div>
     <div class="field-group">
@@ -37,9 +37,10 @@
 <script>
   var CATEGORIES = [
     { value: 'hair styling', label: 'Hair styling' },
-    { value: 'nails', label: 'Nails' },
-    { value: 'makeup', label: 'Makeup' },
-    { value: 'Threading and waxing', label: 'Threading and waxing' }
+    { value: 'facial treatment', label: 'Facial treatment' }
+    // { value: 'nails', label: 'Nails' },
+    // { value: 'makeup', label: 'Makeup' },
+    // { value: 'Threading and waxing', label: 'Threading and waxing' }
   ];
 
   function categoryOptionsHtml(selected) {
@@ -54,7 +55,7 @@
   }
 
   function formatPrice(value) {
-    return 'AED ' + Number(value).toFixed(0);
+    return 'JD ' + Number(value).toFixed(0);
   }
 
   function showError(message) {
@@ -155,7 +156,7 @@
           '<input type="text" class="field-input edit-description" style="font-family: var(--font-body);" value="' + service.description + '" maxlength="30" />' +
         '</div>' +
         '<div class="field-group">' +
-          '<label class="field-label">Price (AED)</label>' +
+          '<label class="field-label">Price (JD)</label>' +
           '<input type="number" class="field-input edit-price" style="font-family: var(--font-body);" value="' + service.price + '" min="10" max="500" />' +
         '</div>' +
         '<div class="field-group">' +

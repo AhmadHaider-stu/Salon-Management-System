@@ -7,6 +7,8 @@ from app.CRUD.client import get_client
 from app.CRUD.employee import get_employee
 from app.models.appointment_service import AppointmentService
 from app.enums.enum import AppointmentStatus
+from zoneinfo import ZoneInfo
+now = datetime.now(ZoneInfo("Asia/Amman"))
 
 
 def send_confirmation_emails(session, appointmentID):

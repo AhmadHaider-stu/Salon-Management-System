@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 from app.schemas.appointment import ServiceSelection
 from datetime import datetime
+from zoneinfo import ZoneInfo
+now = datetime.now(ZoneInfo("Asia/Amman"))
 
 
 class WalkInClientCreate(BaseModel):

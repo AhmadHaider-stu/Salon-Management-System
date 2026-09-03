@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard · Hair Lounge{% endblock %}
+{% block title %}Dashboard · Ayman Matar Salon{% endblock %}
 
 {% block content %}
 <div class="page">
@@ -24,7 +24,7 @@
   <div class="section-title">Appointments</div>
   <div id="dashAppointments" style="margin-bottom: 28px;"></div>
 
-  <div class="section-title">Stylists today</div>
+  <div class="section-title">Barbers today</div>
   <div id="stylistList"></div>
 </div>
 
@@ -38,7 +38,7 @@
     return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   }
   function formatPrice(value) {
-    return 'AED ' + Number(value).toFixed(0);
+    return 'JD ' + Number(value).toFixed(0);
   }
   function statusBadgeClass(status) {
     return 'status-badge status-' + status.toLowerCase();

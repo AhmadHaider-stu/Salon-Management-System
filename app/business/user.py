@@ -38,9 +38,9 @@ def update_phone(session, userID, phone):
         if status == 'FAIL':
             raise NotFound()
 
-        if not is_valid_phone(phone, "AE"):
+        if not is_valid_phone(phone, "JO"):
             raise InvalidPhoneNumber()
-        phone = format_phone(phone, "AE")
+        phone = format_phone(phone, "JO")
 
         status_p, existing = get_user_by_phone(session=session, phone=phone)
         if status_p == 'OK' and existing.id != user.id:
@@ -63,3 +63,5 @@ def update_phone(session, userID, phone):
     except:
         session.rollback()
         raise
+
+

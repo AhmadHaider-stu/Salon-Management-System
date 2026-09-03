@@ -14,10 +14,10 @@ def get_or_raise(session , clientID):
 def register_client (session , f_name , l_name ,phone, email= None ):
         f_name = f_name.upper()
         l_name = l_name.upper()
-        if phone is not None and not is_valid_phone(phone, "AE"):
+        if phone is not None and not is_valid_phone(phone, "JO"):
                 raise InvalidPhoneNumber()      
         if phone is not None:
-                phone = format_phone(phone, "AE")
+                phone = format_phone(phone, "JO")
         client = add_client(session=session, f_name=f_name, l_name=l_name, email=email, phone=phone)
         return client
 
@@ -47,9 +47,9 @@ def delete_client(session, clientID):
 
 def find_or_create_walk_in(session, f_name, l_name, phone, email=None):
         try:
-                if not is_valid_phone(phone, "AE"):
+                if not is_valid_phone(phone, "JO"):
                         raise InvalidPhoneNumber()
-                formatted_phone = format_phone(phone, "AE")
+                formatted_phone = format_phone(phone, "JO")
 
                 status, existing = get_client_by_phone(session=session, phone=formatted_phone)
                 if status == 'OK':
@@ -65,9 +65,9 @@ def alter_client (session, clientID , data):
                 updates = data.model_dump(exclude_unset=True)
 
                 if 'phone' in updates:
-                        if not is_valid_phone(updates['phone'], "AE"):
+                        if not is_valid_phone(updates['phone'], "JO"):
                                 raise InvalidPhoneNumber()
-                        updates['phone'] = format_phone(updates['phone'], "AE")
+                        updates['phone'] = format_phone(updates['phone'], "JO")
 
                 for field, value in updates.items():
                         if field in ('f_name', 'l_name'):

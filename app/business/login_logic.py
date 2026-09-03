@@ -13,9 +13,9 @@ def register_user(session, f_name, oauth_sub, l_name, email, phone, provider=Non
                 raise IsBlocked()
             return login_user(session=session, oauth_sub=oauth_sub)
 
-        if not is_valid_phone(phone, "AE"):
+        if not is_valid_phone(phone, "JO"):
             raise InvalidPhoneNumber()
-        phone = format_phone(phone, "AE")
+        phone = format_phone(phone, "JO")
 
         status, existing_phone_user = get_user_by_phone(session=session, phone=phone)  # CONFIRM: need this CRUD function
         if status == 'OK':
@@ -44,9 +44,9 @@ def complete_phone(session, userID, phone):
         status, user = get_user(session=session, userID=userID)
         if status == 'FAIL':
             raise NotFound()
-        if not is_valid_phone(phone, "AE"):
+        if not is_valid_phone(phone, "JO"):
             raise InvalidPhoneNumber()
-        phone = format_phone(phone, "AE")
+        phone = format_phone(phone, "JO")
 
         user.phone = phone
         if user.client_id is not None:

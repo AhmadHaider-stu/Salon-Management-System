@@ -32,9 +32,9 @@ def register_employee(session , f_name , l_name , email , phone, photo = None , 
     try:
         f_name = f_name.upper()
         l_name = l_name.upper()
-        if not is_valid_phone(phone, "AE"):
+        if not is_valid_phone(phone, "JO"):
             raise InvalidPhoneNumber()
-        phone = format_phone(phone, "AE")
+        phone = format_phone(phone, "JO")
         employee = get_employee_by_email(session=session , email=email)
         if employee[1] != None:
             raise IsEmployee()

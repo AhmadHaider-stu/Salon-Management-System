@@ -67,9 +67,9 @@ def alter_employee(session, employeeID, data):
         updates = data.model_dump(exclude_unset=True)
 
         if 'phone' in updates:
-            if not is_valid_phone(updates['phone'], "AE"):
+            if not is_valid_phone(updates['phone'], "JO"):
                 raise InvalidPhoneNumber()
-            updates['phone'] = format_phone(updates['phone'], "AE")
+            updates['phone'] = format_phone(updates['phone'], "JO")
 
         for field, value in updates.items():
             if field in ('f_name', 'l_name'):

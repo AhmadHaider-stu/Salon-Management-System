@@ -5,6 +5,8 @@ from app.models.employee import Employee
 from app.models.appointment import Appointment
 from app.models.appointment_service import AppointmentService
 from app.enums.enum import AppointmentStatus
+from zoneinfo import ZoneInfo
+now = datetime.now(ZoneInfo("Asia/Amman"))
 
 
 def get_dashboard_summary(session):

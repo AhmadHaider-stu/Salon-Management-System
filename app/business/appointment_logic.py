@@ -13,7 +13,8 @@ from app.exceptions.user import *
 from app.exceptions.appointments import *
 from app.CRUD.employee_schedule import get_schedule_for_day
 from app.business.reminders import send_confirmation_emails, send_completion_email
-
+from zoneinfo import ZoneInfo
+now = datetime.now(ZoneInfo("Asia/Amman"))
 
 
 

@@ -18,6 +18,7 @@ class ServiceCategory(enum.Enum):
     NAIL = 'nails'
     MAKEUP = 'makeup'
     WAXING = 'Threading and waxing'
+    FACIAL = 'facial treatment'
 
 class Provider(enum.Enum):
     GOOGLE = 'google'

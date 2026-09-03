@@ -4,6 +4,8 @@ from app.CRUD.appointment_service import *
 from app.CRUD.appointment import *
 from app.enums.enum import AppointmentStatus, Role
 from app.CRUD.client import *
+from zoneinfo import ZoneInfo
+now = datetime.now(ZoneInfo("Asia/Amman"))
 
 def get_employee_calendar_day(session, employeeID, date, viewer):
     day_start = datetime.combine(date, time.min)
