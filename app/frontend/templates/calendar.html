@@ -3,16 +3,17 @@
 {% block title %}Calendar · Ayman Matar Salon{% endblock %}
 
 {% block content %}
-<div class="page">
-  <div class="page-title">Calendar</div>
-  <div class="page-sub">{{ "Every appointment across the salon." if is_staff else "Your upcoming appointments." }}</div>
+{% set lang = request.session.get('lang', 'ar') %}
+<div class="page" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+  <div class="page-title" id="pageTitle"></div>
+  <div class="page-sub" id="pageSub"></div>
 
   <div id="pageError" style="display:none;" class="error-banner"></div>
 
   <div class="calendar-controls">
     <div class="view-toggle">
-      <button type="button" class="view-btn active" data-view="day">Day</button>
-      <button type="button" class="view-btn" data-view="month">Month</button>
+      <button type="button" class="view-btn active" data-view="day" id="dayViewBtn"></button>
+      <button type="button" class="view-btn" data-view="month" id="monthViewBtn"></button>
     </div>
     <input type="date" id="calDate" class="field-input" style="font-family: var(--font-body);" />
   </div>
@@ -20,7 +21,7 @@
   {% if is_staff %}
   <div class="date-field">
     <select id="employeeSelect" class="field-input" style="font-family: var(--font-body);">
-      <option value="">All employees</option>
+      <option value="" id="allEmployeesOpt"></option>
     </select>
   </div>
   {% endif %}
@@ -36,40 +37,40 @@
 <div class="modal-overlay" id="walkinOverlay">
   <div class="modal-panel">
     <div class="modal-header">
-      <div class="page-title" style="font-size:18px;margin-bottom:0;">New appointment</div>
+      <div class="page-title" style="font-size:18px;margin-bottom:0;" id="wiModalTitle"></div>
       <button type="button" class="modal-close-btn" id="walkinCloseBtn">&times;</button>
     </div>
 
     <div id="walkinError" style="display:none;" class="error-banner"></div>
 
-    <div class="section-title">Client</div>
+    <div class="section-title" id="wiClientTitle"></div>
     <div class="field-group">
-      <input type="text" id="wiFirstName" class="field-input" style="font-family: var(--font-body);" placeholder="First name" />
+      <input type="text" id="wiFirstName" class="field-input" style="font-family: var(--font-body);" />
     </div>
     <div class="field-group">
-      <input type="text" id="wiLastName" class="field-input" style="font-family: var(--font-body);" placeholder="Last name" />
+      <input type="text" id="wiLastName" class="field-input" style="font-family: var(--font-body);" />
     </div>
     <div class="field-group">
-      <input type="tel" id="wiPhone" class="field-input" inputmode="numeric" pattern="[0-9+]*" style="font-family: var(--font-body);" placeholder="Phone number" />
+      <input type="tel" id="wiPhone" class="field-input" inputmode="numeric" pattern="[0-9+]*" style="font-family: var(--font-body);" />
     </div>
 
-    <div class="section-title" style="margin-top:20px;">Services</div>
+    <div class="section-title" style="margin-top:20px;" id="wiServicesTitle"></div>
     <div id="wiServicesList"></div>
 
-    <div class="section-title" style="margin-top:20px;">Cart</div>
-    <div id="wiCartList"><div class="cart-empty">No services added yet</div></div>
+    <div class="section-title" style="margin-top:20px;" id="wiCartTitle"></div>
+    <div id="wiCartList"><div class="cart-empty" id="wiCartEmptyMsg"></div></div>
 
     <div class="date-field">
-      <div class="section-title">Choose date</div>
+      <div class="section-title" id="wiDateTitle"></div>
       <input type="date" id="wiDateInput" class="field-input" style="font-family: var(--font-body);" />
     </div>
 
     <div class="date-field" id="wiSlotsSection" style="display:none;">
-      <div class="section-title">Available times</div>
+      <div class="section-title" id="wiSlotsTitle"></div>
       <div id="wiSlotsGrid" class="slots-grid"></div>
     </div>
 
-    <button type="button" class="btn btn-primary" id="wiSubmitBtn" style="margin-top:16px;">Create appointment</button>
+    <button type="button" class="btn btn-primary" id="wiSubmitBtn" style="margin-top:16px;"></button>
   </div>
 </div>
 {% endif %}
@@ -84,6 +85,25 @@
   var clientMap = {};
   var employeeCache = {};
 
+  document.getElementById('pageTitle').textContent = t('calendar_title');
+  document.getElementById('pageSub').textContent = isStaff ? t('calendar_sub_staff') : t('calendar_sub_client');
+  document.getElementById('dayViewBtn').textContent = t('day_view');
+  document.getElementById('monthViewBtn').textContent = t('month_view');
+  if (isStaff) {
+    document.getElementById('allEmployeesOpt').textContent = t('all_employees');
+    document.getElementById('wiModalTitle').textContent = t('new_appointment');
+    document.getElementById('wiClientTitle').textContent = t('client_label');
+    document.getElementById('wiFirstName').placeholder = t('first_name');
+    document.getElementById('wiLastName').placeholder = t('last_name');
+    document.getElementById('wiPhone').placeholder = t('phone_label');
+    document.getElementById('wiServicesTitle').textContent = t('services_title');
+    document.getElementById('wiCartTitle').textContent = t('cart_label');
+    document.getElementById('wiCartEmptyMsg').textContent = t('no_services_yet');
+    document.getElementById('wiDateTitle').textContent = t('choose_date');
+    document.getElementById('wiSlotsTitle').textContent = t('available_times');
+    document.getElementById('wiSubmitBtn').textContent = t('create_appointment_btn');
+  }
+
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function todayStr() {
     var d = new Date();
@@ -93,7 +113,18 @@
     return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   }
   function formatPrice(value) {
-    return 'JD ' + Number(value).toFixed(0);
+    var amount = Number(value).toFixed(0);
+    return window.LANG === 'ar' ? (amount + ' ' + t('currency')) : (t('currency') + ' ' + amount);
+  }
+  function categoryLabel(category) {
+    var entry = window.CATEGORY_LABELS[category];
+    if (entry) return entry[window.LANG] || entry.ar;
+    return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+  }
+  function statusLabel(status) {
+    var entry = window.STATUS_LABELS[status.toLowerCase()];
+    if (entry) return entry[window.LANG] || entry.en;
+    return status;
   }
 
   async function loadClientMap() {
@@ -115,7 +146,7 @@
       employeeCache[serviceId] = await res.json();
     }
     var match = employeeCache[serviceId].find(function (e) { return e.id === employeeId; });
-    return match ? (match.f_name + ' ' + match.l_name) : 'Stylist';
+    return match ? (match.f_name + ' ' + match.l_name) : t('barber_fallback');
   }
 
   async function loadEmployeeOptions() {
@@ -147,7 +178,7 @@
       refresh();
     } else {
       var data = await res.json();
-      showError(data.detail || 'Could not change status.');
+      showError(data.detail || t('err_status_change'));
       refresh();
     }
   }
@@ -159,7 +190,7 @@
     statuses.forEach(function (s) {
       var opt = document.createElement('option');
       opt.value = s;
-      opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+      opt.textContent = statusLabel(s);
       if (s === current.toLowerCase()) opt.selected = true;
       select.appendChild(opt);
     });
@@ -178,10 +209,10 @@
     detail.className = 'appt-detail';
     detail.innerHTML =
       '<div class="reschedule-panel">' +
-        '<div class="section-title" style="margin-bottom:0;">Reschedule</div>' +
+        '<div class="section-title" style="margin-bottom:0;">' + t('reschedule_label') + '</div>' +
         '<input type="date" class="field-input reschedule-date" style="font-family: var(--font-body); max-width: 180px;" />' +
         '<div class="slots-grid reschedule-slots"></div>' +
-        '<button type="button" class="small-save-btn reschedule-save-btn" style="align-self:flex-start;" disabled>Save new time</button>' +
+        '<button type="button" class="small-save-btn reschedule-save-btn" style="align-self:flex-start;" disabled>' + t('save_new_time') + '</button>' +
       '</div>' +
       '<div class="detail-services"></div>';
     card.appendChild(detail);
@@ -229,7 +260,7 @@
       var data = await res.json();
 
       if (!data.slots || data.slots.length === 0) {
-        slotsGrid.innerHTML = '<div class="slots-empty">No times available this day.</div>';
+        slotsGrid.innerHTML = '<div class="slots-empty">' + t('no_times_today') + '</div>';
         return;
       }
       data.slots.forEach(function (iso) {
@@ -259,14 +290,14 @@
         refresh();
       } else {
         var data = await res.json();
-        showError(data.detail || 'Could not reschedule this appointment.');
+        showError(data.detail || t('err_reschedule'));
       }
     });
   }
 
   async function loadServicesIntoDetail(appointmentId, detail) {
     var container = detail.querySelector('.detail-services');
-    container.innerHTML = '<div class="cal-card-sub">Loading…</div>';
+    container.innerHTML = '<div class="cal-card-sub">' + t('loading') + '</div>';
 
     var res = await fetch('/appointment/' + appointmentId);
     var data = await res.json();
@@ -278,12 +309,12 @@
       html +=
         '<div class="appt-detail-service">' +
           '<div>' +
-            '<div class="appt-service-name">' + (serviceMap[s.service_id] || 'Service') + '</div>' +
-            '<div class="appt-service-sub">with ' + employeeName + ' · ' + formatTime(s.start_time) + '</div>' +
+            '<div class="appt-service-name">' + (serviceMap[s.service_id] || t('service_fallback')) + '</div>' +
+            '<div class="appt-service-sub">' + t('with_prefix') + ' ' + employeeName + ' · ' + formatTime(s.start_time) + '</div>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:8px;">' +
             '<input type="number" class="reprice-input" value="' + s.price + '" data-id="' + s.id + '" min="0" />' +
-            '<button type="button" class="small-save-btn reprice-save-btn" data-id="' + s.id + '">Save</button>' +
+            '<button type="button" class="small-save-btn reprice-save-btn" data-id="' + s.id + '">' + t('reprice_save_btn') + '</button>' +
           '</div>' +
         '</div>';
     }
@@ -305,7 +336,7 @@
           refresh();
         } else {
           var data = await res.json();
-          showError(data.detail || 'Could not update price.');
+          showError(data.detail || t('err_reprice'));
         }
       });
     });
@@ -317,13 +348,13 @@
     var body = document.getElementById('calendarBody');
     body.innerHTML = '';
     if (appointments.length === 0) {
-      body.innerHTML = '<div class="cart-empty">No appointments this day</div>';
+      body.innerHTML = '<div class="cart-empty">' + t('no_appointments_day') + '</div>';
       return;
     }
     appointments.forEach(function (a) {
       var card = document.createElement('div');
       card.className = 'cal-card';
-      var clientName = clientMap[a.client_id] || (a.phone || 'Unknown client');
+      var clientName = clientMap[a.client_id] || (a.phone || t('unknown_client'));
       card.innerHTML =
         '<div class="cal-card-top">' +
           '<div>' +
@@ -343,18 +374,18 @@
     var body = document.getElementById('calendarBody');
     body.innerHTML = '';
     if (services.length === 0) {
-      body.innerHTML = '<div class="cart-empty">No appointments this day</div>';
+      body.innerHTML = '<div class="cart-empty">' + t('no_appointments_day') + '</div>';
       return;
     }
     services.forEach(function (s) {
       var card = document.createElement('div');
       card.className = 'cal-card';
-      var clientName = s.client_name || 'Unknown client';
+      var clientName = s.client_name || t('unknown_client');
       card.innerHTML =
         '<div class="cal-card-top">' +
           '<div>' +
             '<div class="cal-card-time">' + formatTime(s.start_time) + ' – ' + formatTime(s.end_time) + '</div>' +
-            '<div class="cal-card-sub">' + clientName + ' · ' + (serviceMap[s.service_id] || 'Service') + '</div>' +
+            '<div class="cal-card-sub">' + clientName + ' · ' + (serviceMap[s.service_id] || t('service_fallback')) + '</div>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:10px;" class="status-cell"></div>' +
         '</div>' +
@@ -370,11 +401,14 @@
     body.innerHTML = '';
     Object.keys(buckets).sort(function (a, b) { return Number(a) - Number(b); }).forEach(function (day) {
       var items = buckets[day];
+      var countLabel = items.length === 0
+        ? t('no_appointments_month')
+        : items.length + ' ' + (items.length === 1 ? t('appointment_singular') : t('appointment_plural'));
       var row = document.createElement('div');
       row.className = 'month-day-row';
       row.innerHTML =
         '<div class="month-day-num">' + day + '</div>' +
-        '<div class="month-day-count">' + (items.length === 0 ? 'No appointments' : items.length + ' appointment' + (items.length === 1 ? '' : 's')) + '</div>';
+        '<div class="month-day-count">' + countLabel + '</div>';
       row.addEventListener('click', function () { onDayClick(day); });
       body.appendChild(row);
     });
@@ -469,7 +503,7 @@
     Object.keys(byCategory).forEach(function (category) {
       var title = document.createElement('div');
       title.className = 'category-title';
-      title.textContent = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+      title.textContent = categoryLabel(category);
       container.appendChild(title);
       byCategory[category].forEach(function (service) {
         container.appendChild(buildWiServiceRow(service));
@@ -484,16 +518,16 @@
       '<div class="service-row-main">' +
         '<div>' +
           '<div class="service-name">' + service.description + '</div>' +
-          '<div class="service-meta">' + service.time_duration + ' min</div>' +
+          '<div class="service-meta">' + service.time_duration + ' ' + (window.LANG === 'ar' ? 'دقيقة' : 'min') + '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:12px;">' +
-          '<div class="service-price">JD ' + Number(service.price).toFixed(0) + '</div>' +
+          '<div class="service-price">' + formatPrice(service.price) + '</div>' +
           '<button class="add-btn" type="button" aria-label="Add">+</button>' +
         '</div>' +
       '</div>' +
       '<div class="employee-picker">' +
-        '<select><option value="">Loading stylists...</option></select>' +
-        '<button type="button" class="confirm-add-btn">Add to cart</button>' +
+        '<select><option value="">' + t('loading_barbers') + '</option></select>' +
+        '<button type="button" class="confirm-add-btn">' + t('add_to_cart') + '</button>' +
       '</div>';
 
     var addBtn = row.querySelector('.add-btn');
@@ -509,7 +543,7 @@
         var res = await fetch('/service/' + service.id + '/employees');
         var employees = await res.json();
         select.innerHTML = employees.length === 0
-          ? '<option value="">No stylist available</option>'
+          ? '<option value="">' + t('no_barber_available') + '</option>'
           : employees.map(function (e) { return '<option value="' + e.id + '">' + e.f_name + ' ' + e.l_name + '</option>'; }).join('');
       }
     });
@@ -534,7 +568,7 @@
   function renderWiCart() {
     var list = document.getElementById('wiCartList');
     if (wiCart.length === 0) {
-      list.innerHTML = '<div class="cart-empty">No services added yet</div>';
+      list.innerHTML = '<div class="cart-empty">' + t('no_services_yet') + '</div>';
       document.getElementById('wiSlotsSection').style.display = 'none';
       return;
     }
@@ -545,10 +579,10 @@
       el.innerHTML =
         '<div>' +
           '<div class="cart-item-name">' + item.name + '</div>' +
-          '<div class="cart-item-sub">with ' + item.employee_name + '</div>' +
+          '<div class="cart-item-sub">' + t('with_prefix') + ' ' + item.employee_name + '</div>' +
         '</div>' +
         '<div class="cart-item-right">' +
-          '<div class="cart-item-price">JD ' + Number(item.price).toFixed(0) + '</div>' +
+          '<div class="cart-item-price">' + formatPrice(item.price) + '</div>' +
           '<button class="remove-btn" type="button" data-index="' + index + '">' +
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
           '</button>' +
@@ -582,7 +616,7 @@
     section.style.display = 'block';
     grid.innerHTML = '';
     if (!data.slots || data.slots.length === 0) {
-      grid.innerHTML = '<div class="slots-empty">No times available this day.</div>';
+      grid.innerHTML = '<div class="slots-empty">' + t('no_times_today') + '</div>';
       return;
     }
     data.slots.forEach(function (iso) {
@@ -617,9 +651,9 @@
       var lName = document.getElementById('wiLastName').value.trim();
       var phone = document.getElementById('wiPhone').value.trim();
 
-      if (!fName || !lName || !phone) { showWiError("Fill in the client's name and phone."); return; }
-      if (wiCart.length === 0) { showWiError('Add at least one service.'); return; }
-      if (!wiSelectedSlot) { showWiError('Choose an available time.'); return; }
+      if (!fName || !lName || !phone) { showWiError(t('wi_fill_client')); return; }
+      if (wiCart.length === 0) { showWiError(t('err_add_service')); return; }
+      if (!wiSelectedSlot) { showWiError(t('err_choose_time')); return; }
 
       var payload = {
         client: { f_name: fName, l_name: lName, phone: phone },
@@ -633,7 +667,7 @@
 
       if (!res.ok) {
         var err = await res.json();
-        showWiError(err.detail || 'Could not create this appointment.');
+        showWiError(err.detail || t('wi_could_not_create'));
         return;
       }
 
@@ -645,7 +679,7 @@
 
       if (!confirmRes.ok) {
         var confirmErr = await confirmRes.json();
-        showError('Appointment created, but could not send the confirmation: ' + (confirmErr.detail || confirmRes.status));
+        showError(t('wi_confirmation_failed_prefix') + (confirmErr.detail || confirmRes.status));
       }
     });
   }

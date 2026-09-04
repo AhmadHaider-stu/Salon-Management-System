@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ request.session.get('lang', 'ar') }}" dir="{{ 'rtl' if request.session.get('lang', 'ar') == 'ar' else 'ltr' }}">
 
 <head>
-  <title>Sign in</title>
+  <title>{{ t(request, 'sign_in_title') }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
 </head>
@@ -20,19 +20,19 @@
       {% if error %}
       <div class="error-banner">
         {% if error == "blocked" %}
-          Your account has been blocked. Contact the salon for help.
+          {{ t(request, 'err_blocked') }}
         {% else %}
-          Something went wrong signing you in. Try again.
+          {{ t(request, 'err_signin_generic') }}
         {% endif %}
       </div>
       {% endif %}
 
-      <div class="auth-headline">Welcome</div>
-      <div class="auth-body">Sign in to book an appointment or manage your visits.</div>
+      <div class="auth-headline">{{ t(request, 'welcome_headline') }}</div>
+      <div class="auth-body">{{ t(request, 'signin_body') }}</div>
 
       <a href="/login" class="btn btn-google">
         <span class="google-icon"></span>
-        Continue with Google
+        {{ t(request, 'continue_google') }}
       </a>
     </div>
   </div>

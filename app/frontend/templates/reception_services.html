@@ -3,59 +3,78 @@
 {% block title %}Services · Ayman Matar Salon{% endblock %}
 
 {% block content %}
-<div class="page">
-  <div class="page-title">Services</div>
-  <div class="page-sub">Add, edit, or retire services offered.</div>
+{% set lang = request.session.get('lang', 'ar') %}
+<div class="page" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+  <div class="page-title" id="pageTitle"></div>
+  <div class="page-sub" id="pageSub"></div>
 
   <div id="pageError" style="display:none;" class="error-banner"></div>
 
-  <button type="button" class="btn btn-outline" id="addToggleBtn" style="margin-bottom: 20px;">+ Add service</button>
+  <button type="button" class="btn btn-outline" id="addToggleBtn" style="margin-bottom: 20px;"></button>
 
   <div class="employee-picker" id="addPanel">
     <div class="field-group">
-      <label class="field-label">Category</label>
+      <label class="field-label" id="newCategoryLabel"></label>
       <select id="newCategory" class="field-input" style="font-family: var(--font-body);"></select>
     </div>
     <div class="field-group">
-      <label class="field-label">Description</label>
+      <label class="field-label" id="newDescLabel"></label>
       <input type="text" id="newDescription" class="field-input" style="font-family: var(--font-body);" maxlength="30" />
     </div>
     <div class="field-group">
-      <label class="field-label">Price (JD)</label>
+      <label class="field-label" id="newPriceLabel"></label>
       <input type="number" id="newPrice" class="field-input" style="font-family: var(--font-body);" min="10" max="500" />
     </div>
     <div class="field-group">
-      <label class="field-label">Duration (minutes)</label>
+      <label class="field-label" id="newDurationLabel"></label>
       <input type="number" id="newDuration" class="field-input" style="font-family: var(--font-body);" min="10" max="180" />
     </div>
-    <button type="button" class="confirm-add-btn" id="addSaveBtn">Create service</button>
+    <button type="button" class="confirm-add-btn" id="addSaveBtn"></button>
   </div>
 
   <div id="servicesList" style="margin-top: 20px;"></div>
 </div>
 
 <script>
-  var CATEGORIES = [
-    { value: 'hair styling', label: 'Hair styling' },
-    { value: 'facial treatment', label: 'Facial treatment' }
-    // { value: 'nails', label: 'Nails' },
-    // { value: 'makeup', label: 'Makeup' },
-    // { value: 'Threading and waxing', label: 'Threading and waxing' }
-  ];
+  document.getElementById('pageTitle').textContent = t('services_title');
+  document.getElementById('pageSub').textContent = t('services_mgmt_sub');
+  document.getElementById('addToggleBtn').textContent = '+ ' + t('add_service_btn');
+  document.getElementById('newCategoryLabel').textContent = t('category_label');
+  document.getElementById('newDescLabel').textContent = t('description_label');
+  document.getElementById('newPriceLabel').textContent = t('price_label') + ' (' + t('currency') + ')';
+  document.getElementById('newDurationLabel').textContent = t('duration_label');
+  document.getElementById('addSaveBtn').textContent = t('create_service_btn');
+
+  // Which categories can be picked when creating a NEW service. Existing services in
+  // other categories (nails, makeup, waxing) still display and can be edited fine —
+  // this only controls what's offered going forward.
+  var VISIBLE_CATEGORY_VALUES = ['hair styling', 'facial treatment'];
+
+  function categoryLabel(value) {
+    var entry = window.CATEGORY_LABELS[value];
+    if (entry) return entry[window.LANG] || entry.ar;
+    return value;
+  }
 
   function categoryOptionsHtml(selected) {
-    return CATEGORIES.map(function (c) {
-      return '<option value="' + c.value + '"' + (c.value === selected ? ' selected' : '') + '>' + c.label + '</option>';
+    return VISIBLE_CATEGORY_VALUES.map(function (v) {
+      return '<option value="' + v + '"' + (v === selected ? ' selected' : '') + '>' + categoryLabel(v) + '</option>';
     }).join('');
   }
 
-  function categoryLabel(value) {
-    var match = CATEGORIES.find(function (c) { return c.value === value; });
-    return match ? match.label : value;
+  // For editing an EXISTING service: always include its current category, even if it's
+  // been hidden from new-service creation, so saving other fields can't silently reassign it.
+  function editCategoryOptionsHtml(selected) {
+    var html = categoryOptionsHtml(selected);
+    if (VISIBLE_CATEGORY_VALUES.indexOf(selected) === -1) {
+      html += '<option value="' + selected + '" selected>' + categoryLabel(selected) + '</option>';
+    }
+    return html;
   }
 
   function formatPrice(value) {
-    return 'JD ' + Number(value).toFixed(0);
+    var amount = Number(value).toFixed(0);
+    return window.LANG === 'ar' ? (amount + ' ' + t('currency')) : (t('currency') + ' ' + amount);
   }
 
   function showError(message) {
@@ -97,7 +116,7 @@
       loadServices();
     } else {
       var data = await res.json();
-      showError(data.detail || 'Could not create service.');
+      showError(data.detail || t('err_create_service'));
     }
   });
 
@@ -133,9 +152,9 @@
       '<div class="service-row-main">' +
         '<div>' +
           '<div class="service-name">' + service.description + '</div>' +
-          '<div class="service-meta">' + service.time_duration + ' min · ' +
+          '<div class="service-meta">' + service.time_duration + ' ' + (window.LANG === 'ar' ? 'دقيقة' : 'min') + ' · ' +
             '<span class="status-badge ' + (service.active ? 'status-active' : 'status-inactive') + '">' +
-              (service.active ? 'Active' : 'Inactive') +
+              (service.active ? t('active_label') : t('inactive_label')) +
             '</span>' +
           '</div>' +
         '</div>' +
@@ -148,27 +167,27 @@
       '</div>' +
       '<div class="employee-picker">' +
         '<div class="field-group">' +
-          '<label class="field-label">Category</label>' +
-          '<select class="field-input edit-category" style="font-family: var(--font-body);">' + categoryOptionsHtml(service.category) + '</select>' +
+          '<label class="field-label">' + t('category_label') + '</label>' +
+          '<select class="field-input edit-category" style="font-family: var(--font-body);">' + editCategoryOptionsHtml(service.category) + '</select>' +
         '</div>' +
         '<div class="field-group">' +
-          '<label class="field-label">Description</label>' +
+          '<label class="field-label">' + t('description_label') + '</label>' +
           '<input type="text" class="field-input edit-description" style="font-family: var(--font-body);" value="' + service.description + '" maxlength="30" />' +
         '</div>' +
         '<div class="field-group">' +
-          '<label class="field-label">Price (JD)</label>' +
+          '<label class="field-label">' + t('price_label') + ' (' + t('currency') + ')</label>' +
           '<input type="number" class="field-input edit-price" style="font-family: var(--font-body);" value="' + service.price + '" min="10" max="500" />' +
         '</div>' +
         '<div class="field-group">' +
-          '<label class="field-label">Duration (minutes)</label>' +
+          '<label class="field-label">' + t('duration_label') + '</label>' +
           '<input type="number" class="field-input edit-duration" style="font-family: var(--font-body);" value="' + service.time_duration + '" min="10" max="180" />' +
         '</div>' +
         '<div class="field-group" style="display:flex;align-items:center;gap:8px;">' +
           '<input type="checkbox" class="edit-active" id="active-' + service.id + '" ' + (service.active ? 'checked' : '') + ' />' +
-          '<label for="active-' + service.id + '" style="font-size:13px;">Active</label>' +
+          '<label for="active-' + service.id + '" style="font-size:13px;">' + t('active_label') + '</label>' +
         '</div>' +
-        '<button type="button" class="confirm-add-btn edit-save-btn">Save changes</button>' +
-        '<button type="button" class="delete-btn-full edit-delete-btn">Delete service</button>' +
+        '<button type="button" class="confirm-add-btn edit-save-btn">' + t('save_changes') + '</button>' +
+        '<button type="button" class="delete-btn-full edit-delete-btn">' + t('delete_service_btn') + '</button>' +
       '</div>';
 
     var editBtn = row.querySelector('.add-btn');
@@ -195,19 +214,19 @@
         loadServices();
       } else {
         var data = await res.json();
-        showError(data.detail || 'Could not save changes.');
+        showError(data.detail || t('err_save_service_changes'));
       }
     });
 
     row.querySelector('.edit-delete-btn').addEventListener('click', async function () {
-      if (!confirm('Delete this service? This cannot be undone.')) return;
+      if (!confirm(t('confirm_delete_service'))) return;
       clearError();
       var res = await fetch('/service/' + service.id, { method: 'DELETE' });
       if (res.ok) {
         loadServices();
       } else {
         var data = await res.json();
-        showError(data.detail || 'Could not delete this service.');
+        showError(data.detail || t('err_delete_service'));
       }
     });
 

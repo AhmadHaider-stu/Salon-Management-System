@@ -3,9 +3,10 @@
 {% block title %}Clients · Ayman Matar Salon{% endblock %}
 
 {% block content %}
-<div class="page">
-  <div class="page-title">Clients</div>
-  <div class="page-sub">Click a client to see their appointment history.</div>
+{% set lang = request.session.get('lang', 'ar') %}
+<div class="page" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+  <div class="page-title" id="pageTitle"></div>
+  <div class="page-sub" id="pageSub"></div>
 
   <div id="pageError" style="display:none;" class="error-banner"></div>
 
@@ -13,6 +14,9 @@
 </div>
 
 <script>
+  document.getElementById('pageTitle').textContent = t('clients_title');
+  document.getElementById('pageSub').textContent = t('clients_sub');
+
   function showError(message) {
     var el = document.getElementById('pageError');
     el.textContent = message;
@@ -26,10 +30,16 @@
     return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   }
   function formatPrice(value) {
-    return 'JD ' + Number(value).toFixed(0);
+    var amount = Number(value).toFixed(0);
+    return window.LANG === 'ar' ? (amount + ' ' + t('currency')) : (t('currency') + ' ' + amount);
   }
   function statusBadgeClass(status) {
     return 'status-badge status-' + status.toLowerCase();
+  }
+  function statusLabel(status) {
+    var entry = window.STATUS_LABELS[status.toLowerCase()];
+    if (entry) return entry[window.LANG] || entry.en;
+    return status;
   }
 
   async function loadClients() {
@@ -40,7 +50,7 @@
     list.innerHTML = '';
 
     if (clients.length === 0) {
-      list.innerHTML = '<div class="cart-empty">No clients yet</div>';
+      list.innerHTML = '<div class="cart-empty">' + t('no_clients_yet') + '</div>';
       return;
     }
 
@@ -81,18 +91,18 @@
   }
 
   async function loadClientAppointments(clientId, detail) {
-    detail.innerHTML = '<div class="cal-card-sub">Loading…</div>';
+    detail.innerHTML = '<div class="cal-card-sub">' + t('loading') + '</div>';
 
     var res = await fetch('/client/' + clientId + '/appointments');
     if (!res.ok) {
-      showError('Could not load appointment history.');
-      detail.innerHTML = '<div class="cal-card-sub">Could not load appointments.</div>';
+      showError(t('err_load_history'));
+      detail.innerHTML = '<div class="cal-card-sub">' + t('err_load_appointments_short') + '</div>';
       return;
     }
     var appointments = await res.json();
 
     if (appointments.length === 0) {
-      detail.innerHTML = '<div class="cal-card-sub">No appointments yet.</div>';
+      detail.innerHTML = '<div class="cal-card-sub">' + t('no_appointments_yet_client') + '</div>';
       return;
     }
 
@@ -104,7 +114,7 @@
         '<div class="appt-detail-service">' +
           '<div>' +
             '<div class="appt-service-name">' + formatDate(a.start_time) + '</div>' +
-            '<div class="appt-service-sub">' + formatTime(a.start_time) + ' – ' + formatTime(a.end_time) + ' · <span class="' + statusBadgeClass(a.status) + '">' + a.status + '</span></div>' +
+            '<div class="appt-service-sub">' + formatTime(a.start_time) + ' – ' + formatTime(a.end_time) + ' · <span class="' + statusBadgeClass(a.status) + '">' + statusLabel(a.status) + '</span></div>' +
           '</div>' +
           '<div class="cart-item-price">' + formatPrice(a.total_price) + '</div>' +
         '</div>';

@@ -3,12 +3,13 @@
 {% block title %}My appointments · Ayman Matar Salon{% endblock %}
 
 {% block content %}
-<div class="page">
-  <div class="page-title">My appointments</div>
+{% set lang = request.session.get('lang', 'ar') %}
+<div class="page" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+  <div class="page-title" id="pageTitle"></div>
 
   <div class="tab-row">
-    <button type="button" class="tab-btn active" data-tab="upcoming">Upcoming</button>
-    <button type="button" class="tab-btn" data-tab="past">Past</button>
+    <button type="button" class="tab-btn active" data-tab="upcoming" id="upcomingTab"></button>
+    <button type="button" class="tab-btn" data-tab="past" id="pastTab"></button>
   </div>
 
   <div id="apptList"></div>
@@ -20,8 +21,13 @@
   var serviceMap = {};
   var employeeCache = {};
 
+  document.getElementById('pageTitle').textContent = t('my_appointments_title');
+  document.getElementById('upcomingTab').textContent = t('tab_upcoming');
+  document.getElementById('pastTab').textContent = t('tab_past');
+
   function formatPrice(value) {
-    return 'JD ' + Number(value).toFixed(0);
+    var amount = Number(value).toFixed(0);
+    return window.LANG === 'ar' ? (amount + ' ' + t('currency')) : (t('currency') + ' ' + amount);
   }
 
   function formatDate(iso) {
@@ -36,6 +42,12 @@
     return 'status-badge status-' + status.toLowerCase();
   }
 
+  function statusLabel(status) {
+    var entry = window.STATUS_LABELS[status.toLowerCase()];
+    if (entry) return entry[window.LANG] || entry.en;
+    return status;
+  }
+
   async function loadServiceMap() {
     var res = await fetch('/service/all');
     var services = await res.json();
@@ -48,7 +60,7 @@
       employeeCache[serviceId] = await res.json();
     }
     var match = employeeCache[serviceId].find(function (e) { return e.id === employeeId; });
-    return match ? (match.f_name + ' ' + match.l_name) : 'Stylist';
+    return match ? (match.f_name + ' ' + match.l_name) : t('barber_fallback');
   }
 
   async function loadAppointments() {
@@ -75,8 +87,8 @@
       var empty = document.createElement('div');
       empty.className = 'empty-state';
       empty.innerHTML = currentTab === 'upcoming'
-        ? 'No upcoming appointments.<br><a href="/book">Book one</a>'
-        : 'No past appointments yet.';
+        ? t('no_upcoming') + '<br><a href="/book">' + t('book_one') + '</a>'
+        : t('no_past');
       list.appendChild(empty);
       return;
     }
@@ -96,7 +108,7 @@
           '<div class="cal-card-sub">' + formatTime(appointment.start_time) + ' – ' + formatTime(appointment.end_time) + '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:10px;">' +
-          '<span class="' + statusBadgeClass(appointment.status) + '">' + appointment.status + '</span>' +
+          '<span class="' + statusBadgeClass(appointment.status) + '">' + statusLabel(appointment.status) + '</span>' +
           '<button type="button" class="card-expand-btn" aria-label="Expand appointment"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>' +
         '</div>' +
       '</div>' +
@@ -112,7 +124,7 @@
       expandBtn.classList.toggle('open', isOpen);
       if (isOpen && !loaded) {
         loaded = true;
-        detail.innerHTML = '<div class="cal-card-sub">Loading…</div>';
+        detail.innerHTML = '<div class="cal-card-sub">' + t('loading') + '</div>';
         var res = await fetch('/appointment/' + appointment.id);
         var data = await res.json();
 
@@ -123,8 +135,8 @@
           linesHtml +=
             '<div class="appt-service-line">' +
               '<div>' +
-                '<div class="appt-service-name">' + (serviceMap[s.service_id] || 'Service') + '</div>' +
-                '<div class="appt-service-sub">with ' + employeeName + ' · ' + formatTime(s.start_time) + '</div>' +
+                '<div class="appt-service-name">' + (serviceMap[s.service_id] || t('service_fallback')) + '</div>' +
+                '<div class="appt-service-sub">' + t('with_prefix') + ' ' + employeeName + ' · ' + formatTime(s.start_time) + '</div>' +
               '</div>' +
               '<div class="cart-item-price">' + formatPrice(s.price) + '</div>' +
             '</div>';

@@ -1,9 +1,9 @@
 from fastapi import APIRouter , Request
 from starlette.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-
+from app.templates import templates
 router = APIRouter(prefix='/logout',tags=['auth'])
-templates = Jinja2Templates(directory='app/frontend/templates')
+# templates = Jinja2Templates(directory='app/frontend/templates')
 
 @router.post('')
 async def logout(request: Request):

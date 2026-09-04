@@ -3,21 +3,29 @@
 {% block title %}Services · Ayman Matar Salon{% endblock %}
 
 {% block content %}
-<div class="page">
-  <div class="page-title">Services</div>
-  <div class="page-sub">Everything we offer.</div>
+{% set lang = request.session.get('lang', 'ar') %}
+<div class="page" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+  <div class="page-title" id="pageTitle"></div>
+  <div class="page-sub" id="pageSub"></div>
 
   <div id="servicesList"></div>
 
-  <a href="/book" class="btn btn-primary" style="margin-top: 24px;">Book an appointment</a>
+  <a href="/book" class="btn btn-primary" id="bookLink" style="margin-top: 24px;"></a>
 </div>
 
 <script>
+  document.getElementById('pageTitle').textContent = t('services_title');
+  document.getElementById('pageSub').textContent = t('services_sub');
+  document.getElementById('bookLink').textContent = t('book_appointment_btn');
+
   function formatPrice(value) {
-    return 'JD ' + Number(value).toFixed(0);
+    var amount = Number(value).toFixed(0);
+    return window.LANG === 'ar' ? (amount + ' ' + t('currency')) : (t('currency') + ' ' + amount);
   }
 
-  function renderCategoryLabel(category) {
+  function categoryLabel(category) {
+    var entry = window.CATEGORY_LABELS[category];
+    if (entry) return entry[window.LANG] || entry.ar;
     return category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
   }
 
@@ -38,7 +46,7 @@
     Object.keys(byCategory).forEach(function (category) {
       var title = document.createElement('div');
       title.className = 'category-title';
-      title.textContent = renderCategoryLabel(category);
+      title.textContent = categoryLabel(category);
       container.appendChild(title);
 
       byCategory[category].forEach(function (service) {
@@ -48,7 +56,7 @@
           '<div class="service-row-main">' +
             '<div>' +
               '<div class="service-name">' + service.description + '</div>' +
-              '<div class="service-meta">' + service.time_duration + ' min</div>' +
+              '<div class="service-meta">' + service.time_duration + ' ' + (window.LANG === 'ar' ? 'دقيقة' : 'min') + '</div>' +
             '</div>' +
             '<div class="service-price">' + formatPrice(service.price) + '</div>' +
           '</div>';

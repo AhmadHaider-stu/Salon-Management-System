@@ -3,69 +3,93 @@
 {% block title %}Me · Ayman Matar Salon{% endblock %}
 
 {% block content %}
-<div class="page">
-  <div class="page-title">Me</div>
-  <div class="page-sub">Your account details.</div>
+{% set lang = request.session.get('lang', 'ar') %}
+<div class="page" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+  <div class="page-title">{{ t(request, 'me_title') }}</div>
+  <div class="page-sub">{{ t(request, 'me_sub') }}</div>
+
+  <div class="section-title">{{ t(request, 'language_label') }}</div>
+  <div class="lang-switcher" style="margin-bottom: 28px;">
+    <form method="post" action="/login/set-language" style="display:contents;">
+      <input type="hidden" name="lang" value="ar" />
+      <button type="submit" class="lang-option {{ 'active' if lang == 'ar' else '' }}">العربية</button>
+    </form>
+    <form method="post" action="/login/set-language" style="display:contents;">
+      <input type="hidden" name="lang" value="en" />
+      <button type="submit" class="lang-option {{ 'active' if lang == 'en' else '' }}">English</button>
+    </form>
+  </div>
 
   <div class="me-avatar-row" id="avatarRow" style="display:none;">
     <div id="avatarContainer"></div>
     <div>
       <input type="file" id="photoInput" accept="image/*" style="display:none;" />
-      <button type="button" class="me-avatar-upload-btn" id="uploadBtn">Change photo</button>
-      <span class="me-save-status" id="photoStatus" style="display:none;">Saved</span>
+      <button type="button" class="me-avatar-upload-btn" id="uploadBtn"></button>
+      <span class="me-save-status" id="photoStatus" style="display:none;"></span>
     </div>
   </div>
 
   <div class="me-section">
     <div class="field-group">
-      <label class="field-label" for="fNameField">First name</label>
+      <label class="field-label" for="fNameField" id="firstNameLabel"></label>
       <input type="text" id="fNameField" class="field-input" style="font-family: var(--font-body);" />
     </div>
     <div class="field-group">
-      <label class="field-label" for="lNameField">Last name</label>
+      <label class="field-label" for="lNameField" id="lastNameLabel"></label>
       <input type="text" id="lNameField" class="field-input" style="font-family: var(--font-body);" />
     </div>
   </div>
 
   <div class="me-section">
     <div class="field-group">
-      <label class="field-label">Email</label>
+      <label class="field-label" id="emailLabel"></label>
       <input type="text" id="emailField" class="field-input" style="font-family: var(--font-body);" disabled />
     </div>
     <div class="field-group">
-      <label class="field-label" for="phoneField">Phone</label>
+      <label class="field-label" for="phoneField" id="phoneLabel"></label>
       <input type="tel" id="phoneField" class="field-input" inputmode="numeric" pattern="[0-9+]*" style="font-family: var(--font-body);" />
     </div>
   </div>
 
   <div class="me-section" id="staffSection" style="display:none;">
-    <div class="section-title">Salon profile</div>
+    <div class="section-title" id="salonProfileTitle"></div>
     <div class="field-group">
-      <label class="field-label" for="bioField">Bio</label>
+      <label class="field-label" for="bioField" id="bioLabel"></label>
       <textarea id="bioField" class="field-input" style="font-family: var(--font-body); min-height: 80px; resize: vertical;"></textarea>
     </div>
     <div class="field-group">
-      <label class="field-label" for="socialField">Instagram / Facebook link</label>
+      <label class="field-label" for="socialField" id="socialLabel"></label>
       <input type="text" id="socialField" class="field-input" style="font-family: var(--font-body);" placeholder="https://instagram.com/..." />
     </div>
   </div>
 
-  <button type="button" class="me-save-btn" id="saveAllBtn">Save changes</button>
-  <span class="me-save-status" id="saveAllStatus" style="display:none;">Saved</span>
+  <button type="button" class="me-save-btn" id="saveAllBtn"></button>
+  <span class="me-save-status" id="saveAllStatus" style="display:none;"></span>
 
   <div id="meError" style="display:none;" class="error-banner" style="margin-top: 16px;"></div>
 
   <form method="post" action="/logout" style="margin-top: 32px;">
-    <button type="submit" class="delete-btn-full">Log out</button>
+    <button type="submit" class="delete-btn-full" id="logoutBtn"></button>
   </form>
 </div>
 
 <script>
   var currentEmployeeId = null;
 
-  function showStatus(id, text) {
+  document.getElementById('uploadBtn').textContent = t('change_photo');
+  document.getElementById('firstNameLabel').textContent = t('first_name');
+  document.getElementById('lastNameLabel').textContent = t('last_name');
+  document.getElementById('emailLabel').textContent = t('email_label');
+  document.getElementById('phoneLabel').textContent = t('phone_label');
+  document.getElementById('salonProfileTitle').textContent = t('salon_profile');
+  document.getElementById('bioLabel').textContent = t('bio_label');
+  document.getElementById('socialLabel').textContent = t('social_label');
+  document.getElementById('saveAllBtn').textContent = t('save_changes');
+  document.getElementById('logoutBtn').textContent = t('log_out');
+
+  function showStatus(id) {
     var el = document.getElementById(id);
-    el.textContent = text || 'Saved';
+    el.textContent = t('saved_status');
     el.style.display = 'inline';
     setTimeout(function () { el.style.display = 'none'; }, 2000);
   }
@@ -129,7 +153,7 @@
     });
     if (!nameRes.ok) {
       var nameErr = await nameRes.json();
-      errors.push('Name: ' + (nameErr.detail || 'could not save'));
+      errors.push(t('err_name_prefix') + ': ' + (nameErr.detail || t('err_could_not_save')));
     }
 
     var phoneRes = await fetch('/user/update-phone', {
@@ -142,7 +166,7 @@
       document.getElementById('phoneField').value = updated.phone;
     } else {
       var phoneErr = await phoneRes.json();
-      errors.push('Phone: ' + (phoneErr.detail || 'could not save'));
+      errors.push(t('err_phone_prefix') + ': ' + (phoneErr.detail || t('err_could_not_save')));
     }
 
     if (currentEmployeeId) {
@@ -156,7 +180,7 @@
       });
       if (!profileRes.ok) {
         var profileErr = await profileRes.json();
-        errors.push('Profile: ' + (profileErr.detail || 'could not save'));
+        errors.push(t('err_profile_prefix') + ': ' + (profileErr.detail || t('err_could_not_save')));
       }
     }
 
@@ -175,7 +199,7 @@
     var file = this.files[0];
     if (!file) return;
     if (!currentEmployeeId) {
-      showError('No employee record loaded — check that /user/me actually returns employee_id.');
+      showError(t('err_could_not_load_profile'));
       return;
     }
 
@@ -195,10 +219,10 @@
         showStatus('photoStatus');
       } else {
         var errData = await res.json();
-        showError('Upload failed: ' + (errData.detail || res.status));
+        showError(t('err_upload_failed') + ': ' + (errData.detail || res.status));
       }
     } catch (err) {
-      showError('Network error during upload: ' + err.message);
+      showError(t('err_network_upload') + ': ' + err.message);
     }
   });
 

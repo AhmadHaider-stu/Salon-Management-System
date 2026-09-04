@@ -3,9 +3,10 @@
 {% block title %}Employees · Ayman Matar Salon{% endblock %}
 
 {% block content %}
-<div class="page">
-  <div class="page-title">Employees</div>
-  <div class="page-sub">Profile, services, and schedule for each stylist.</div>
+{% set lang = request.session.get('lang', 'ar') %}
+<div class="page" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+  <div class="page-title" id="pageTitle"></div>
+  <div class="page-sub" id="pageSub"></div>
 
   <div id="pageError" style="display:none;" class="error-banner"></div>
 
@@ -13,17 +14,21 @@
 </div>
 
 <script>
+  document.getElementById('pageTitle').textContent = t('employees_title');
+  document.getElementById('pageSub').textContent = t('employees_sub');
+
   var DAYS = [
-    { value: 'sunday', label: 'Sunday' },
-    { value: 'monday', label: 'Monday' },
-    { value: 'tuesday', label: 'Tuesday' },
-    { value: 'wednesday', label: 'Wednesday' },
-    { value: 'thursday', label: 'Thursday' },
-    { value: 'friday', label: 'Friday' },
-    { value: 'saturday', label: 'Saturday' }
+    { value: 'sunday', key: 'day_sunday' },
+    { value: 'monday', key: 'day_monday' },
+    { value: 'tuesday', key: 'day_tuesday' },
+    { value: 'wednesday', key: 'day_wednesday' },
+    { value: 'thursday', key: 'day_thursday' },
+    { value: 'friday', key: 'day_friday' },
+    { value: 'saturday', key: 'day_saturday' }
   ];
 
   var allServices = [];
+  var calendarArrow = window.LANG === 'ar' ? ' ←' : ' →';
 
   function showError(message) {
     var el = document.getElementById('pageError');
@@ -48,7 +53,7 @@
     list.innerHTML = '';
 
     if (employees.length === 0) {
-      list.innerHTML = '<div class="cart-empty">No employees yet</div>';
+      list.innerHTML = '<div class="cart-empty">' + t('no_employees_yet') + '</div>';
       return;
     }
 
@@ -68,12 +73,12 @@
             : '<div class="avatar-fallback">' + (emp.f_name ? emp.f_name[0] : '?') + '</div>') +
           '<div>' +
             '<div class="cal-card-time">' + emp.f_name + ' ' + emp.l_name + '</div>' +
-            '<div class="cal-card-sub">' + (emp.phone || 'No phone') + '</div>' +
+            '<div class="cal-card-sub">' + (emp.phone || t('no_phone')) + '</div>' +
           '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:10px;">' +
           '<span class="status-badge ' + (emp.active ? 'status-active' : 'status-inactive') + '">' +
-            (emp.active ? 'Active' : 'Inactive') +
+            (emp.active ? t('active_label') : t('inactive_label')) +
           '</span>' +
           '<button type="button" class="card-expand-btn" aria-label="Expand employee"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>' +
         '</div>' +
@@ -97,7 +102,7 @@
   }
 
   async function buildEmployeeDetail(emp, detail) {
-    detail.innerHTML = '<div class="cal-card-sub">Loading…</div>';
+    detail.innerHTML = '<div class="cal-card-sub">' + t('loading') + '</div>';
 
     var empRes = await fetch('/employee/' + emp.id);
     var freshEmp = await empRes.json();
@@ -112,30 +117,30 @@
     var assignedIds = assignedServices.map(function (s) { return s.id; });
 
     detail.innerHTML =
-      '<div class="section-title">Profile</div>' +
+      '<div class="section-title">' + t('profile_title') + '</div>' +
       '<div class="field-group">' +
-        '<label class="field-label">Bio</label>' +
+        '<label class="field-label">' + t('bio_label') + '</label>' +
         '<textarea class="field-input emp-bio" style="font-family: var(--font-body); min-height: 70px; resize: vertical;">' + (freshEmp.bio || '') + '</textarea>' +
       '</div>' +
       '<div class="field-group">' +
-        '<label class="field-label">Instagram / Facebook link</label>' +
+        '<label class="field-label">' + t('social_label') + '</label>' +
         '<input type="text" class="field-input emp-social" style="font-family: var(--font-body);" value="' + (freshEmp.socialMedia || '') + '" />' +
       '</div>' +
       '<div class="field-group" style="display:flex;align-items:center;gap:8px;">' +
         '<input type="checkbox" class="emp-active" id="active-' + emp.id + '" ' + (freshEmp.active ? 'checked' : '') + ' />' +
-        '<label for="active-' + emp.id + '" style="font-size:13px;">Active</label>' +
+        '<label for="active-' + emp.id + '" style="font-size:13px;">' + t('active_label') + '</label>' +
       '</div>' +
-      '<button type="button" class="confirm-add-btn emp-save-profile-btn">Save profile</button>' +
+      '<button type="button" class="confirm-add-btn emp-save-profile-btn">' + t('save_profile_btn') + '</button>' +
 
-      '<div class="section-title" style="margin-top:24px;">Assigned services</div>' +
+      '<div class="section-title" style="margin-top:24px;">' + t('assigned_services_title') + '</div>' +
       '<div class="emp-services-list">' +
         allServices.map(function (s) {
           return '<label class="checklist-row"><input type="checkbox" class="emp-service-check" value="' + s.id + '" ' + (assignedIds.indexOf(s.id) !== -1 ? 'checked' : '') + ' /> ' + s.description + '</label>';
         }).join('') +
       '</div>' +
-      '<button type="button" class="confirm-add-btn emp-save-services-btn">Save services</button>' +
+      '<button type="button" class="confirm-add-btn emp-save-services-btn">' + t('save_services_btn') + '</button>' +
 
-      '<div class="section-title" style="margin-top:24px;">Weekly schedule</div>' +
+      '<div class="section-title" style="margin-top:24px;">' + t('weekly_schedule_title') + '</div>' +
       '<div class="emp-schedule-list">' +
         DAYS.map(function (d) {
           var existing = scheduleByDay[d.value];
@@ -144,7 +149,7 @@
             '<div class="day-schedule-row">' +
               '<label style="display:flex;align-items:center;gap:8px;width:130px;flex-shrink:0;">' +
                 '<input type="checkbox" class="emp-day-check" data-day="' + d.value + '" ' + (checked ? 'checked' : '') + ' />' +
-                '<span class="day-schedule-label" style="width:auto;">' + d.label + '</span>' +
+                '<span class="day-schedule-label" style="width:auto;">' + t(d.key) + '</span>' +
               '</label>' +
               '<div class="day-schedule-times" style="' + (checked ? '' : 'display:none;') + '" data-day-times="' + d.value + '">' +
                 '<input type="time" class="emp-day-start" data-day="' + d.value + '" value="' + (existing ? existing.start_time.slice(0, 5) : '09:00') + '" />' +
@@ -155,9 +160,9 @@
           );
         }).join('') +
       '</div>' +
-      '<button type="button" class="confirm-add-btn emp-save-schedule-btn">Save schedule</button>' +
+      '<button type="button" class="confirm-add-btn emp-save-schedule-btn">' + t('save_schedule_btn') + '</button>' +
 
-      '<a href="/reception/calendar?employee=' + emp.id + '" class="text-link" style="display:block;margin-top:18px;">View calendar →</a>';
+      '<a href="/reception/calendar?employee=' + emp.id + '" class="text-link" style="display:block;margin-top:18px;">' + t('view_calendar_link') + calendarArrow + '</a>';
 
     detail.querySelectorAll('input, textarea, button, a').forEach(function (el) {
       el.addEventListener('click', function (e) { e.stopPropagation(); });
@@ -186,7 +191,7 @@
         loadEmployees();
       } else {
         var data = await res.json();
-        showError(data.detail || 'Could not save profile.');
+        showError(data.detail || t('err_save_profile'));
       }
     });
 
@@ -205,7 +210,7 @@
         clearError();
       } else {
         var data = await res.json();
-        showError(data.detail || 'Could not save services.');
+        showError(data.detail || t('err_save_services'));
       }
     });
 
@@ -227,7 +232,7 @@
         clearError();
       } else {
         var data = await res.json();
-        showError(data.detail || 'Could not save schedule.');
+        showError(data.detail || t('err_save_schedule'));
       }
     });
   }

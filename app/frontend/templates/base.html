@@ -8,6 +8,15 @@
 </head>
 
 <body>
+  <script>
+    window.LANG = "{{ request.session.get('lang', 'ar') }}";
+    window.CATEGORY_LABELS = {{ CATEGORY_LABELS_JSON | safe }};
+    window.STRINGS = {{ STRINGS_JSON | safe }};
+    window.STATUS_LABELS = {{ STATUS_LABELS_JSON | safe }};
+    window.ROLE_LABELS = {{ ROLE_LABELS_JSON | safe }};
+    function t(key) { return (window.STRINGS[key] && window.STRINGS[key][window.LANG]) || key; }
+  </script>
+
   {% from "_icons.html" import icon %}
 
   <div class="demo-banner">Demo version — for testing purposes only</div>
@@ -16,17 +25,16 @@
     <a href="{{ brand_href | default('/home') }}" class="nav-brand">
       <span>Ayman Matar Salon</span>
       <div class="barber-pole"></div>
-
     </a>
     <div class="nav-items-scroll">
       {% for link in nav_links | default([]) %}
       <a href="{{ link.href }}" class="nav-item {% if active_page == link.key %}active{% endif %}">
         {{ icon(link.icon) }}
-        <span>{{ link.label }}</span>
+        <span>{{ t(request, link.key) }}</span>
       </a>
       {% endfor %}
     </div>
-  </nav>
+    </nav>
 
   <div class="app-body">
     {% block content %}{% endblock %}

@@ -1,16 +1,18 @@
 from datetime import datetime, timedelta, date as date_type, time
 from app.models.client import Client
+from app.models.user import User , Role
 from app.models.service import Service
 from app.models.employee import Employee
 from app.models.appointment import Appointment
 from app.models.appointment_service import AppointmentService
 from app.enums.enum import AppointmentStatus
+
 from zoneinfo import ZoneInfo
 now = datetime.now(ZoneInfo("Asia/Amman"))
 
 
 def get_dashboard_summary(session):
-    total_customers = session.query(Client).count()
+    total_customers = session.query(User).filter(User.role == Role.CLIENT).count()
     total_appointments = session.query(Appointment).count()
     total_accepted = session.query(Appointment).filter(
         Appointment.status.in_([AppointmentStatus.CONFIRMED, AppointmentStatus.COMPLETED])

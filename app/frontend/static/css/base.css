@@ -1,5 +1,37 @@
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Cairo:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap');
+[dir="rtl"] {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 500;
+  --font-display: 'Cairo', sans-serif;
+}
+.lang-switcher {
+  display: inline-flex;
+  border: 1.5px solid var(--ink);
+  border-radius: 24px;
+  overflow: hidden;
+}
 
+.lang-option {
+  padding: 9px 20px;
+  border: none;
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.lang-option.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.lang-option:not(.active):hover {
+  background: var(--paper);
+}
 :root {
   --ink: #1A1A1A;
   --ink-soft: #6E6E6E;

@@ -3,14 +3,18 @@
 {% block title %}Our Stylists · Ayman Matar Salon{% endblock %}
 
 {% block content %}
-<div class="page">
-  <div class="page-title">Our barbers</div>
-  <div class="page-sub">Meet the team.</div>
+{% set lang = request.session.get('lang', 'ar') %}
+<div class="page" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+  <div class="page-title" id="pageTitle"></div>
+  <div class="page-sub" id="pageSub"></div>
 
   <div id="stylistList"></div>
 </div>
 
 <script>
+  document.getElementById('pageTitle').textContent = t('our_barbers_title');
+  document.getElementById('pageSub').textContent = t('meet_the_team');
+
   function phoneHref(phone) {
     return 'tel:' + phone.replace(/[^0-9+]/g, '');
   }
@@ -24,7 +28,7 @@
     list.innerHTML = '';
 
     if (active.length === 0) {
-      list.innerHTML = '<div class="cart-empty">No stylists to show yet</div>';
+      list.innerHTML = '<div class="cart-empty">' + t('no_barbers_yet') + '</div>';
       return;
     }
 
@@ -69,7 +73,7 @@
     if (services.length > 0) {
       servicesHtml =
         '<div class="services-toggle-row" id="toggle-' + emp.id + '">' +
-          '<span class="services-toggle-label">Services (' + services.length + ')</span>' +
+          '<span class="services-toggle-label">' + t('services_title') + ' (' + services.length + ')</span>' +
           '<svg class="cal-card-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +
         '</div>' +
         '<div class="chip-list" id="' + servicesId + '">' + chipsHtml + '</div>';

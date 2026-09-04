@@ -3,21 +3,25 @@
 {% block title %}Roles · Ayman Matar Salon{% endblock %}
 
 {% block content %}
-<div class="page">
-  <div class="page-title">Roles</div>
-  <div class="page-sub">Promote clients to staff, or change staff roles.</div>
+{% set lang = request.session.get('lang', 'ar') %}
+<div class="page" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+  <div class="page-title" id="pageTitle"></div>
+  <div class="page-sub" id="pageSub"></div>
 
   <div id="pageError" style="display:none;" class="error-banner"></div>
 
   <div class="field-group">
-    <input type="text" id="userSearch" class="field-input" style="font-family: var(--font-body);"
-      placeholder="Search by name or email" />
+    <input type="text" id="userSearch" class="field-input" style="font-family: var(--font-body);" />
   </div>
 
   <div id="userList"></div>
 </div>
 
 <script>
+  document.getElementById('pageTitle').textContent = t('roles_title');
+  document.getElementById('pageSub').textContent = t('roles_sub');
+  document.getElementById('userSearch').placeholder = t('search_placeholder');
+
   var allUsers = [];
   var currentUserId = {{ user.id }};
 
@@ -34,8 +38,9 @@
     return 'status-badge role-badge-' + role;
   }
   function roleLabel(role) {
-    var labels = { client: 'Client', employee: 'Employee', reception: 'Receptionist', admin: 'Admin' };
-    return labels[role] || role;
+    var entry = window.ROLE_LABELS[role];
+    if (entry) return entry[window.LANG] || entry.en;
+    return role;
   }
 
   async function loadUsers() {
@@ -58,7 +63,7 @@
     list.innerHTML = '';
 
     if (filtered.length === 0) {
-      list.innerHTML = '<div class="cart-empty">No users found</div>';
+      list.innerHTML = '<div class="cart-empty">' + t('no_users_found') + '</div>';
       return;
     }
 
@@ -75,25 +80,25 @@
     var actionsHtml = '';
 
     if (role === 'client') {
-      actionsHtml = '<button type="button" class="role-action-btn primary" data-action="make_employee">Promote to employee</button>';
+      actionsHtml = '<button type="button" class="role-action-btn primary" data-action="make_employee">' + t('promote_to_employee') + '</button>';
     } else if (role === 'employee') {
       actionsHtml =
-        '<button type="button" class="role-action-btn primary" data-action="make_receptionist">Make receptionist</button>' +
-        '<button type="button" class="role-action-btn primary" data-action="make_admin">Make admin</button>' +
-        '<button type="button" class="role-action-btn" data-action="delete_employee">Remove as employee</button>';
+        '<button type="button" class="role-action-btn primary" data-action="make_receptionist">' + t('make_receptionist_btn') + '</button>' +
+        '<button type="button" class="role-action-btn primary" data-action="make_admin">' + t('make_admin_btn') + '</button>' +
+        '<button type="button" class="role-action-btn" data-action="delete_employee">' + t('remove_as_employee') + '</button>';
     } else if (role === 'receptionist') {
-      actionsHtml = '<button type="button" class="role-action-btn" data-action="delete_receptionist">Remove as receptionist</button>';
+      actionsHtml = '<button type="button" class="role-action-btn" data-action="delete_receptionist">' + t('remove_as_receptionist') + '</button>';
     } else if (role === 'admin') {
       actionsHtml = u.id === currentUserId
-        ? '<div class="card-readonly-line">This is you</div>'
-        : '<button type="button" class="role-action-btn" data-action="delete_admin">Remove as admin</button>';
+        ? '<div class="card-readonly-line">' + t('this_is_you') + '</div>'
+        : '<button type="button" class="role-action-btn" data-action="delete_admin">' + t('remove_as_admin') + '</button>';
     }
 
     card.innerHTML =
       '<div class="cal-card-top">' +
       '<div>' +
       '<div class="cal-card-time">' + u.f_name + ' ' + u.l_name + '</div>' +
-      '<div class="cal-card-sub">' + (u.email || 'No email') + '</div>' +
+      '<div class="cal-card-sub">' + (u.email || t('no_email')) + '</div>' +
       '</div>' +
       '<span class="' + roleBadgeClass(role) + '">' + roleLabel(role) + '</span>' +
       '</div>' +
@@ -112,23 +117,23 @@
     make_employee: { method: 'POST', path: '/role/make_employee/' },
     make_receptionist: { method: 'PUT', path: '/role/make_receptionist/' },
     make_admin: { method: 'PUT', path: '/role/make_admin/' },
-    delete_employee: { method: 'DELETE', path: '/role/delete_employee/', confirmMsg: 'Remove this person as an employee? They will become a plain client.' },
-    delete_receptionist: { method: 'DELETE', path: '/role/delete_receptionist/', confirmMsg: 'Remove this person as receptionist? They will return to being an employee.' },
-    delete_admin: { method: 'DELETE', path: '/role/delete_admin/', confirmMsg: 'Remove this person as admin? They will return to being an employee.' }
+    delete_employee: { method: 'DELETE', path: '/role/delete_employee/', confirmKey: 'confirm_remove_employee' },
+    delete_receptionist: { method: 'DELETE', path: '/role/delete_receptionist/', confirmKey: 'confirm_remove_receptionist' },
+    delete_admin: { method: 'DELETE', path: '/role/delete_admin/', confirmKey: 'confirm_remove_admin' }
   };
 
   function extractErrorMessage(data) {
-    if (!data || !data.detail) return 'Could not complete this action.';
+    if (!data || !data.detail) return t('err_generic_action');
     if (typeof data.detail === 'string') return data.detail;
     if (Array.isArray(data.detail)) {
       return data.detail.map(function (e) { return e.msg || JSON.stringify(e); }).join(', ');
     }
-    return 'Could not complete this action.';
+    return t('err_generic_action');
   }
 
   async function performRoleAction(action, userId) {
     var config = ACTION_CONFIG[action];
-    if (config.confirmMsg && !confirm(config.confirmMsg)) return;
+    if (config.confirmKey && !confirm(t(config.confirmKey))) return;
 
     clearError();
     var res = await fetch(config.path + userId, { method: config.method });

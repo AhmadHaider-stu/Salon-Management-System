@@ -6,11 +6,12 @@ from app.auth.google import oauth
 from app.business.login_logic import *
 from app.dependencies import get_db
 from app.frontend.role_routing import get_role_home
+from app.templates import templates
 
 
 router = APIRouter(prefix='/login', tags=['auth'])
 
-templates = Jinja2Templates(directory='app/frontend/templates')
+# templates = Jinja2Templates(directory='app/frontend/templates')
 
 
 @router.get("")
@@ -72,3 +73,9 @@ async def complete_phone_submit(request: Request, phone: str = Form(...), db: di
     del request.session['pending_registration']
     request.session['user_id'] = user.id
     return RedirectResponse(get_role_home(user.role), status_code=303)
+
+
+@router.post('/set-language')
+def set_language(request: Request, lang: str = Form(...)):
+    request.session['lang'] = lang if lang in ('ar', 'en') else 'ar'
+    return RedirectResponse(request.headers.get('referer', '/home'), status_code=303)

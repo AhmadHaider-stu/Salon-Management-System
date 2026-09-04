@@ -4,10 +4,10 @@ from fastapi.templating import Jinja2Templates
 from app.dependencies import get_google_user, get_db
 from app.CRUD.user import get_user
 from app.frontend.role_routing import get_nav_links, get_role_home
-
+from app.templates import templates
 router = APIRouter()
 
-templates = Jinja2Templates(directory='app/frontend/templates')
+# templates = Jinja2Templates(directory='app/frontend/templates')
 
 
 @router.get('/')

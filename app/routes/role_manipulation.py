@@ -3,6 +3,7 @@ from fastapi import Depends , APIRouter , HTTPException
 from app.business.role_logic import *
 from app.dependencies import require_admin , get_db , get_current_user
 from app.schemas.employee import EmployeeResponse
+from app.templates import templates
 
 router = APIRouter(prefix='/role' , tags=['role-manipulation'])
 

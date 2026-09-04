@@ -3,7 +3,8 @@
 {% block title %}Ayman Matar Salon{% endblock %}
 
 {% block content %}
-<div class="page">
+{% set lang = request.session.get('lang', 'ar') %}
+<div class="page" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
   <div class="page-header">
     <div class="header-user">
       {% if user.employee and user.employee.photo %}
@@ -13,7 +14,7 @@
       {% endif %}
       <div>
         <div class="greeting-name">{{ user.f_name }} {{ user.l_name }}</div>
-        <div class="greeting-sub">Welcome back</div>
+        <div class="greeting-sub">{{ t(request, 'welcome_back') }}</div>
       </div>
     </div>
   </div>
@@ -21,46 +22,42 @@
   <div class="shortcut-grid">
     <a href="/book" class="shortcut-card primary">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      <div class="shortcut-label">Book</div>
-      <div class="shortcut-sub">New appointment</div>
+      <div class="shortcut-label">{{ t(request, 'book') }}</div>
+      <div class="shortcut-sub">{{ t(request, 'new_appointment') }}</div>
     </a>
     <a href="/my-appointments" class="shortcut-card">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      <div class="shortcut-label">My visits</div>
-      <div class="shortcut-sub">View bookings</div>
+      <div class="shortcut-label">{{ t(request, 'my_visits') }}</div>
+      <div class="shortcut-sub">{{ t(request, 'view_bookings') }}</div>
     </a>
   </div>
 
   <div class="owner-feature">
     <img src="{{ url_for('static', path='images/gallery/owner.jpg') }}" alt="Ayman Matar Salon owner at work" class="owner-photo gallery-photo" />
-    <div class="owner-caption">Mr. Ayman Matar</div>
+    <div class="owner-caption">{{ t(request, 'owner_caption') }}</div>
   </div>
 
-  <div class="about-line">Ayman Matar Salon is owned by a professional stylist, with an experienced team of stylists.</div>
+  <div class="about-line">{{ t(request, 'about_salon') }}</div>
 
-  <div class="section-title">Gallery</div>
+  <div class="section-title">{{ t(request, 'gallery') }}</div>
 
   <div class="gallery-category">
-    <div class="gallery-category-title">Our Work</div>
+    <div class="gallery-category-title">{{ t(request, 'our_work') }}</div>
     <div class="gallery-grid" style="grid-template-columns: repeat(2, 1fr);">
       <!-- <img src="{{ url_for('static', path='images/gallery/hair-3.jpg') }}" alt="Hair styling by Ayman Matar Salon" class="gallery-photo" />
       <img src="{{ url_for('static', path='images/gallery/hair-4.jpg') }}" alt="Hair styling by Ayman Matar Salon" class="gallery-photo" />
       <img src="{{ url_for('static', path='images/gallery/hair-5.jpg') }}" alt="Hair styling by Ayman Matar Salon" class="gallery-photo" /> -->
       <img src="{{ url_for('static', path='images/gallery/hair-1.jpg') }}" alt="Hair styling by Ayman Matar Salon" class="gallery-photo" />
       <img src="{{ url_for('static', path='images/gallery/hair-2.jpg') }}" alt="Hair styling by Ayman Matar Salon" class="gallery-photo" />
-     
-    
-    
     </div>
   </div>
 
-
   <a href="/stylists" class="contact-link" style="margin-top: 0; margin-bottom: 28px;">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    Meet our barbers
+    {{ t(request, 'meet_our_barbers') }}
   </a>
 
-  <div class="section-title">Visit us</div>
+  <div class="section-title">{{ t(request, 'visit_us') }}</div>
   <div class="contact-card">
     <div class="contact-row-list">
       <a href="tel:+962795280290" class="stylist-contact-link">
@@ -69,10 +66,10 @@
       </a>
       <a href="https://maps.app.goo.gl/H9MLd73dY4LB29956" target="_blank" rel="noopener" class="stylist-contact-link">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        View location on map
+        {{ t(request, 'view_location') }}
       </a>
       <div class="map-embed-wrap">
-        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3363.36760938841!2d35.85566547565297!3d32.5430329737623!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151c779bb01592c7%3A0xbe7b30988065c362!2sAyman%20Matar%20Salon!5e0!3m2!1sen!2sjo!4v1788446981880!5m2!1sen!2sjo" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3363.36760938841!2d35.85566547565297!3d32.5430329737623!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x151c779bb01592c7%3A0xbe7b30988065c362!2sAyman%20Matar%20Salon!5e0!3m2!1sen!2sjo!4v1788446981880!5m2!1sen!2sjo" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"></iframe>
       </div>
       <a href="https://www.instagram.com/salonayman1/" target="_blank" rel="noopener" class="stylist-contact-link">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
@@ -83,7 +80,7 @@
         Facebook
       </a>
     </div>
-    <div class="card-readonly-line" style="margin-top: 14px;">Every Day 8:30 a.m. - 8:30 p.m.</div>
+    <div class="card-readonly-line" style="margin-top: 14px;">{{ t(request, 'hours_line') }}</div>
   </div>
 </div>
 

@@ -19,7 +19,10 @@ from app.database import SessionLocal
 from app.business.reminders import send_pending_reminders
 from datetime import datetime
 import os 
+import json
+from app.i18n.strings import t, STRINGS
 from zoneinfo import ZoneInfo
+from app.i18n.strings import t, STRINGS, CATEGORY_LABELS,STATUS_LABELS , ROLE_LABELS
 now = datetime.now(ZoneInfo("Asia/Amman"))
 
 
@@ -46,6 +49,13 @@ app.add_middleware(SessionMiddleware, secret_key=os.getenv('SESSION_SECRET',None
 app.mount('/static', StaticFiles(directory='app/frontend/static'), name='static')
 
 templates = Jinja2Templates(directory='app/frontend/templates')
+
+
+templates.env.globals['t'] = t
+templates.env.globals['STRINGS_JSON'] = json.dumps(STRINGS, ensure_ascii=False)
+templates.env.globals['CATEGORY_LABELS_JSON'] = json.dumps(CATEGORY_LABELS, ensure_ascii=False)
+templates.env.globals['STATUS_LABELS_JSON'] = json.dumps(STATUS_LABELS, ensure_ascii=False)
+templates.env.globals['ROLE_LABELS_JSON'] = json.dumps(ROLE_LABELS, ensure_ascii=False)
 
 
 app.include_router(login_router)

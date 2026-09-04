@@ -4,9 +4,9 @@ from starlette.responses import RedirectResponse
 from app.dependencies import get_db, get_current_user
 from app.enums.enum import Role
 from app.frontend.role_routing import get_nav_links, get_role_home
-
+from app.templates import templates
 router = APIRouter()
-templates = Jinja2Templates(directory='app/frontend/templates')
+# templates = Jinja2Templates(directory='app/frontend/templates')
 
 
 @router.get('/reception/calendar')

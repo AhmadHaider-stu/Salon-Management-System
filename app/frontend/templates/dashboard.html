@@ -3,17 +3,18 @@
 {% block title %}Dashboard · Ayman Matar Salon{% endblock %}
 
 {% block content %}
-<div class="page">
-  <div class="page-title">Dashboard</div>
-  <div class="page-sub">Salon overview.</div>
+{% set lang = request.session.get('lang', 'ar') %}
+<div class="page" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+  <div class="page-title" id="pageTitle"></div>
+  <div class="page-sub" id="pageSub"></div>
 
-  <a href="/admin/roles" class="text-link" style="display:block;margin-bottom:20px;">Manage roles →</a>
+  <a href="/admin/roles" class="text-link" id="manageRolesLink" style="display:block;margin-bottom:20px;"></a>
 
   <div id="pageError" style="display:none;" class="error-banner"></div>
 
   <div class="stat-grid" id="statGrid"></div>
 
-  <div class="section-title">Activity by hour</div>
+  <div class="section-title" id="activityTitle"></div>
   <div class="hour-chart" id="hourChart"></div>
   <div class="hour-labels" id="hourLabels"></div>
 
@@ -21,14 +22,21 @@
     <input type="date" id="dashDate" class="field-input" style="font-family: var(--font-body); max-width: 220px;" />
   </div>
 
-  <div class="section-title">Appointments</div>
+  <div class="section-title" id="appointmentsTitle"></div>
   <div id="dashAppointments" style="margin-bottom: 28px;"></div>
 
-  <div class="section-title">Barbers today</div>
+  <div class="section-title" id="barbersTodayTitle"></div>
   <div id="stylistList"></div>
 </div>
 
 <script>
+  document.getElementById('pageTitle').textContent = t('dashboard_title');
+  document.getElementById('pageSub').textContent = t('salon_overview');
+  document.getElementById('manageRolesLink').textContent = t('manage_roles_link') + (window.LANG === 'ar' ? ' ←' : ' →');
+  document.getElementById('activityTitle').textContent = t('activity_by_hour');
+  document.getElementById('appointmentsTitle').textContent = t('appointments_section');
+  document.getElementById('barbersTodayTitle').textContent = t('barbers_today');
+
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function todayStr() {
     var d = new Date();
@@ -38,10 +46,16 @@
     return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   }
   function formatPrice(value) {
-    return 'JD ' + Number(value).toFixed(0);
+    var amount = Number(value).toFixed(0);
+    return window.LANG === 'ar' ? (amount + ' ' + t('currency')) : (t('currency') + ' ' + amount);
   }
   function statusBadgeClass(status) {
     return 'status-badge status-' + status.toLowerCase();
+  }
+  function statusLabel(status) {
+    var entry = window.STATUS_LABELS[status.toLowerCase()];
+    if (entry) return entry[window.LANG] || entry.en;
+    return status;
   }
   function showError(message) {
     var el = document.getElementById('pageError');
@@ -54,13 +68,13 @@
     var data = await res.json();
 
     var stats = [
-      { label: 'Total customers', value: data.total_customers },
-      { label: 'Total appointments', value: data.total_appointments },
-      { label: 'Accepted', value: data.total_accepted },
-      { label: 'Rejected', value: data.total_rejected },
-      { label: 'Total services', value: data.total_services },
-      { label: "Yesterday's appointments", value: data.yesterday_appointments },
-      { label: 'Upcoming appointments', value: data.upcoming_appointments }
+      { label: t('stat_total_customers'), value: data.total_customers },
+      { label: t('stat_total_appointments'), value: data.total_appointments },
+      { label: t('stat_accepted'), value: data.total_accepted },
+      { label: t('stat_rejected'), value: data.total_rejected },
+      { label: t('stat_total_services'), value: data.total_services },
+      { label: t('stat_yesterday'), value: data.yesterday_appointments },
+      { label: t('stat_upcoming'), value: data.upcoming_appointments }
     ];
 
     var grid = document.getElementById('statGrid');
@@ -111,7 +125,7 @@
       employeeCache[serviceId] = await res.json();
     }
     var match = employeeCache[serviceId].find(function (e) { return e.id === employeeId; });
-    return match ? (match.f_name + ' ' + match.l_name) : 'Stylist';
+    return match ? (match.f_name + ' ' + match.l_name) : t('barber_fallback');
   }
 
   async function loadDashAppointments() {
@@ -121,7 +135,7 @@
 
     var container = document.getElementById('dashAppointments');
     if (appointments.length === 0) {
-      container.innerHTML = '<div class="cart-empty">No appointments this day</div>';
+      container.innerHTML = '<div class="cart-empty">' + t('no_appointments_day') + '</div>';
       return;
     }
 
@@ -136,7 +150,7 @@
   function buildDashCard(a) {
     var card = document.createElement('div');
     card.className = 'cal-card clickable';
-    var clientName = clientMap[a.client_id] || (a.phone || 'Unknown client');
+    var clientName = clientMap[a.client_id] || (a.phone || t('unknown_client'));
     card.innerHTML =
       '<div class="cal-card-top">' +
         '<div>' +
@@ -144,7 +158,7 @@
           '<div class="cal-card-sub">' + clientName + (a.phone ? ' · ' + a.phone : '') + '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:10px;">' +
-          '<span class="' + statusBadgeClass(a.status) + '">' + a.status + '</span>' +
+          '<span class="' + statusBadgeClass(a.status) + '">' + statusLabel(a.status) + '</span>' +
           '<button type="button" class="card-expand-btn" aria-label="Expand appointment"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>' +
         '</div>' +
       '</div>' +
@@ -160,7 +174,7 @@
       expandBtn.classList.toggle('open', isOpen);
       if (isOpen && !loaded) {
         loaded = true;
-        detail.innerHTML = '<div class="cal-card-sub">Loading…</div>';
+        detail.innerHTML = '<div class="cal-card-sub">' + t('loading') + '</div>';
         var res = await fetch('/appointment/' + a.id);
         var data = await res.json();
 
@@ -171,13 +185,13 @@
           html +=
             '<div class="appt-detail-service">' +
               '<div>' +
-                '<div class="appt-service-name">' + (serviceMap[s.service_id] || 'Service') + '</div>' +
-                '<div class="appt-service-sub">with ' + employeeName + ' · ' + formatTime(s.start_time) + '</div>' +
+                '<div class="appt-service-name">' + (serviceMap[s.service_id] || t('service_fallback')) + '</div>' +
+                '<div class="appt-service-sub">' + t('with_prefix') + ' ' + employeeName + ' · ' + formatTime(s.start_time) + '</div>' +
               '</div>' +
               '<div class="cart-item-price">' + formatPrice(s.price) + '</div>' +
             '</div>';
         }
-        detail.innerHTML = html || '<div class="cal-card-sub">No services found.</div>';
+        detail.innerHTML = html || '<div class="cal-card-sub">' + t('no_services_found') + '</div>';
       }
     });
 
@@ -190,7 +204,7 @@
 
     var list = document.getElementById('stylistList');
     if (stylists.length === 0) {
-      list.innerHTML = '<div class="cart-empty">No employees yet</div>';
+      list.innerHTML = '<div class="cart-empty">' + t('no_employees_yet') + '</div>';
       return;
     }
 
@@ -202,7 +216,7 @@
         '<div class="stylist-row">' +
           avatar +
           '<div class="stylist-name">' + s.name + '</div>' +
-          '<div class="stylist-count">' + s.appointments_today + ' today</div>' +
+          '<div class="stylist-count">' + s.appointments_today + t('today_suffix') + '</div>' +
         '</div>'
       );
     }).join('');
@@ -222,7 +236,7 @@
       await refreshDayScoped();
       await loadStylists();
     } catch (err) {
-      showError('Could not load dashboard data.');
+      showError(t('err_load_dashboard'));
     }
   })();
 </script>
