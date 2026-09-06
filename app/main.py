@@ -46,7 +46,7 @@ scheduler.start()
 
 # CHANGE THE KEYYYYYYYYYYYY
 app.add_middleware(SessionMiddleware, secret_key=os.getenv('SESSION_SECRET',None
-                                                        #    ,https_only = True
+                                                           ,https_only = True
                                                            ))
 app.mount('/static', StaticFiles(directory='app/frontend/static'), name='static')
 
