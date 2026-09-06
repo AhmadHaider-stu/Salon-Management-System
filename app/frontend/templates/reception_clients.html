@@ -65,8 +65,8 @@
     card.innerHTML =
       '<div class="cal-card-top">' +
         '<div>' +
-          '<div class="cal-card-time">' + client.f_name + ' ' + client.l_name + '</div>' +
-          '<div class="cal-card-sub">' + (client.phone || '—') + (client.email ? ' · ' + client.email : '') + '</div>' +
+          '<div class="cal-card-time">' + escapeHtml(client.f_name) + ' ' +  escapeHtml(client.l_name )+ '</div>' +
+          '<div class="cal-card-sub">' +escapeHtml(client.phone || '—') + (client.email ? ' · ' + escapeHtml( client.email) : '') + '</div>' +
         '</div>' +
         '<button type="button" class="card-expand-btn" aria-label="Expand client">' +
           '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' +

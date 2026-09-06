@@ -15,6 +15,15 @@
     window.STATUS_LABELS = {{ STATUS_LABELS_JSON | safe }};
     window.ROLE_LABELS = {{ ROLE_LABELS_JSON | safe }};
     function t(key) { return (window.STRINGS[key] && window.STRINGS[key][window.LANG]) || key; }
+    function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
   </script>
 
   {% from "_icons.html" import icon %}

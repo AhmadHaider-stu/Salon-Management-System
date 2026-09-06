@@ -131,13 +131,13 @@
     if (!isStaff) return;
     var res = await fetch('/client');
     var clients = await res.json();
-    clients.forEach(function (c) { clientMap[c.id] = c.f_name + ' ' + c.l_name; });
+    clients.forEach(function (c) { clientMap[c.id] = escapeHtml(c.f_name) + ' ' + escapeHtml(c.l_name); });
   }
 
   async function loadServiceMap() {
     var res = await fetch('/service/all');
     var services = await res.json();
-    services.forEach(function (s) { serviceMap[s.id] = s.description; });
+    services.forEach(function (s) { serviceMap[s.id] = escapeHtml(s.description); });
   }
 
   async function resolveEmployeeName(serviceId, employeeId) {
@@ -146,7 +146,7 @@
       employeeCache[serviceId] = await res.json();
     }
     var match = employeeCache[serviceId].find(function (e) { return e.id === employeeId; });
-    return match ? (match.f_name + ' ' + match.l_name) : t('barber_fallback');
+    return match ? (escapeHtml(match.f_name) + ' ' + escapeHtml(match.l_name)) : t('barber_fallback');
   }
 
   async function loadEmployeeOptions() {
@@ -359,7 +359,7 @@
         '<div class="cal-card-top">' +
           '<div>' +
             '<div class="cal-card-time">' + formatTime(a.start_time) + ' – ' + formatTime(a.end_time) + '</div>' +
-            '<div class="cal-card-sub">' + clientName + (a.phone ? ' · ' + a.phone : '') + '</div>' +
+            '<div class="cal-card-sub">' + clientName + (a.phone ? ' · ' + escapeHtml(a.phone) : '') + '</div>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:10px;" class="status-cell"></div>' +
         '</div>' +
@@ -374,7 +374,7 @@
     var body = document.getElementById('calendarBody');
     body.innerHTML = '';
     if (services.length === 0) {
-      body.innerHTML = '<div class="cart-empty">' + t('no_appointments_day') + '</div>';
+      var clientName = s.client_name ? escapeHtml(s.client_name) : t('unknown_client');
       return;
     }
     services.forEach(function (s) {
@@ -517,7 +517,7 @@
     row.innerHTML =
       '<div class="service-row-main">' +
         '<div>' +
-          '<div class="service-name">' + service.description + '</div>' +
+          '<div class="service-name">' + escapeHtml(service.description) + '</div>' +
           '<div class="service-meta">' + service.time_duration + ' ' + (window.LANG === 'ar' ? 'دقيقة' : 'min') + '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:12px;">' +
@@ -544,7 +544,7 @@
         var employees = await res.json();
         select.innerHTML = employees.length === 0
           ? '<option value="">' + t('no_barber_available') + '</option>'
-          : employees.map(function (e) { return '<option value="' + e.id + '">' + e.f_name + ' ' + e.l_name + '</option>'; }).join('');
+          : employees.map(function (e) { return '<option value="' + e.id + '">' + escapeHtml(e.f_name) + ' ' + escapeHtml(e.l_name) + '</option>'; }).join('');
       }
     });
 
@@ -578,8 +578,8 @@
       el.className = 'cart-item';
       el.innerHTML =
         '<div>' +
-          '<div class="cart-item-name">' + item.name + '</div>' +
-          '<div class="cart-item-sub">' + t('with_prefix') + ' ' + item.employee_name + '</div>' +
+          '<div class="cart-item-name">' + escapeHtml(item.name) + '</div>' +
+          '<div class="cart-item-sub">' + t('with_prefix') + ' ' + escapeHtml(item.employee_name) + '</div>' +
         '</div>' +
         '<div class="cart-item-right">' +
           '<div class="cart-item-price">' + formatPrice(item.price) + '</div>' +

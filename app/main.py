@@ -28,9 +28,9 @@ now = datetime.now(ZoneInfo("Asia/Amman"))
 
 
 app = FastAPI(
-    # docs_url=None,
-    # redoc_url=None,
-    # openapi_url=None
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None
 )
 def run_reminder_check():
     print("REMINDER CHECK RUNNING", datetime.now())
