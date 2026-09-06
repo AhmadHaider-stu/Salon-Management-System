@@ -3,7 +3,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 
 engine = create_engine(
     "sqlite:///salonDB.db",
-    echo=True
+    echo=False
 )
 
 SessionLocal = sessionmaker(bind=engine)
