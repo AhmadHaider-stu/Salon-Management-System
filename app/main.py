@@ -25,6 +25,10 @@ from zoneinfo import ZoneInfo
 from app.i18n.strings import t, STRINGS, CATEGORY_LABELS,STATUS_LABELS , ROLE_LABELS
 now = datetime.now(ZoneInfo("Asia/Amman"))
 
+from app.database import Base, engine
+import app.models
+
+Base.metadata.create_all(engine)
 
 
 app = FastAPI(
