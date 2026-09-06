@@ -22,7 +22,7 @@
 
   <div class="me-avatar-row" id="avatarRow" style="display:none;">
     <div id="avatarContainer"></div>
-    <div>
+    <div id="photoUploadControls" style="display:none;">
       <input type="file" id="photoInput" accept="image/*" style="display:none;" />
       <button type="button" class="me-avatar-upload-btn" id="uploadBtn"></button>
       <span class="me-save-status" id="photoStatus" style="display:none;"></span>
@@ -106,9 +106,9 @@
   function renderAvatar(photoUrl, initials) {
     var container = document.getElementById('avatarContainer');
     if (photoUrl) {
-      container.innerHTML = '<img src="' + photoUrl + '" alt="" class="me-avatar" id="avatarImg" />';
+      container.innerHTML = '<img src="' + escapeHtml(photoUrl) + '" alt="" class="me-avatar" id="avatarImg" />';
     } else {
-      container.innerHTML = '<div class="me-avatar-fallback">' + initials + '</div>';
+      container.innerHTML = '<div class="me-avatar-fallback">' + escapeHtml(initials) + '</div>';
     }
   }
 
@@ -127,6 +127,7 @@
       currentEmployeeId = user.employee_id;
       document.getElementById('staffSection').style.display = 'block';
       document.getElementById('avatarRow').style.display = 'flex';
+      document.getElementById('photoUploadControls').style.display = 'block';
 
       var empRes = await fetch('/employee/' + user.employee_id);
       var employee = await empRes.json();

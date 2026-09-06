@@ -45,7 +45,9 @@ scheduler.add_job(run_reminder_check, 'interval', minutes=2)
 scheduler.start()
 
 # CHANGE THE KEYYYYYYYYYYYY
-app.add_middleware(SessionMiddleware, secret_key=os.getenv('SESSION_SECRET',None))
+app.add_middleware(SessionMiddleware, secret_key=os.getenv('SESSION_SECRET',None
+                                                        #    ,https_only = True
+                                                           ))
 app.mount('/static', StaticFiles(directory='app/frontend/static'), name='static')
 
 templates = Jinja2Templates(directory='app/frontend/templates')

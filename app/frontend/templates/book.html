@@ -102,7 +102,7 @@
     row.innerHTML =
       '<div class="service-row-main">' +
         '<div>' +
-          '<div class="service-name">' + service.description + '</div>' +
+          '<div class="service-name">' + escapeHtml(service.description) + '</div>' +
           '<div class="service-meta">' + service.time_duration + ' ' + (window.LANG === 'ar' ? 'دقيقة' : 'min') + '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:12px;">' +
@@ -131,7 +131,7 @@
           select.innerHTML = '<option value="">' + t('no_barber_available') + '</option>';
         } else {
           select.innerHTML = employees.map(function (e) {
-            return '<option value="' + e.id + '">' + e.f_name + ' ' + e.l_name + '</option>';
+            return '<option value="' + e.id + '">' + escapeHtml(e.f_name) + ' ' + escapeHtml(e.l_name) + '</option>';
           }).join('');
         }
       }
@@ -174,8 +174,8 @@
       el.className = 'cart-item';
       el.innerHTML =
         '<div>' +
-          '<div class="cart-item-name">' + item.name + '</div>' +
-          '<div class="cart-item-sub">' + t('with_prefix') + ' ' + item.employee_name + '</div>' +
+          '<div class="cart-item-name">' + escapeHtml(item.name) + '</div>' +
+'<div class="cart-item-sub">' + t('with_prefix') + ' ' + escapeHtml(item.employee_name) + '</div>' +
         '</div>' +
         '<div class="cart-item-right">' +
           '<div class="cart-item-price">' + formatPrice(item.price) + '</div>' +

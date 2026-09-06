@@ -1,37 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Cairo:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap');
-[dir="rtl"] {
-  font-family: 'Cairo', sans-serif;
-  font-weight: 500;
-  --font-display: 'Cairo', sans-serif;
-}
-.lang-switcher {
-  display: inline-flex;
-  border: 1.5px solid var(--ink);
-  border-radius: 24px;
-  overflow: hidden;
-}
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Cairo:wght@400;500;600;700&display=swap');
 
-.lang-option {
-  padding: 9px 20px;
-  border: none;
-  background: var(--card);
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.lang-option.active {
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.lang-option:not(.active):hover {
-  background: var(--paper);
-}
 :root {
   --ink: #1A1A1A;
   --ink-soft: #6E6E6E;
@@ -46,49 +14,13 @@
   --radius: 14px;
   --radius-sm: 8px;
 }
-.barber-pole {
-  width: 12px;
-  height: 32px;
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
-  flex-shrink: 0;
-  border: 1.5px solid #000;
+
+[dir="rtl"] {
+  font-family: 'Cairo', sans-serif;
+  font-weight: 500;
+  --font-display: 'Cairo', sans-serif;
 }
 
-.barber-pole::after {
-  content: "";
-  position: absolute;
-  top: -100px;
-  left: -50px;
-  width: 100px;
-  height: 260px;
-  background-image: repeating-linear-gradient(
-    45deg,
-    #C8102E 0px, #C8102E 6px,
-    #FFFFFF 6px, #FFFFFF 12px,
-    #002868 12px, #002868 18px,
-    #FFFFFF 18px, #FFFFFF 24px
-  );
-  animation: barber-pole-scroll 1.2s linear infinite;
-}
-
-.barber-pole.lg::after {
-  left: -60px;
-  width: 120px;
-}
-
-@keyframes barber-pole-scroll {
-  from { background-position: 0 0; }
-  to { background-position: 34px 0; }
-}
-.brand-mark-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 4px;
-}
 * {
   margin: 0;
   padding: 0;
@@ -137,6 +69,14 @@ body {
   width: 100%;
   max-width: 380px;
   text-align: center;
+}
+
+.brand-mark-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 4px;
 }
 
 .brand-mark {
@@ -205,7 +145,7 @@ body {
 }
 
 .field-group {
-  text-align: left;
+  text-align: start;
   margin-bottom: 20px;
 }
 
@@ -252,7 +192,7 @@ body {
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   margin-bottom: 20px;
-  text-align: left;
+  text-align: start;
 }
 
 .google-icon {
@@ -703,11 +643,15 @@ body {
     border-right: 1px solid var(--line);
     padding: 24px 14px 28px;
     gap: 4px;
+    overflow-y: auto;
   }
 
   .nav-items-scroll {
     flex-direction: column;
-    overflow: visible;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: visible;
+    overflow-y: auto;
     scroll-snap-type: none;
     gap: 4px;
   }
@@ -1829,4 +1773,69 @@ body {
   font-size: 12px;
   color: var(--brass);
   margin-left: 10px;
+}
+
+.lang-switcher {
+  display: inline-flex;
+  border: 1.5px solid var(--ink);
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.lang-option {
+  padding: 9px 20px;
+  border: none;
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.lang-option.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.lang-option:not(.active):hover {
+  background: var(--paper);
+}
+
+.barber-pole {
+  width: 12px;
+  height: 32px;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  border: 1.5px solid #000;
+}
+
+.barber-pole::after {
+  content: "";
+  position: absolute;
+  top: -100px;
+  left: -50px;
+  width: 100px;
+  height: 260px;
+  background-image: repeating-linear-gradient(
+    45deg,
+    #C8102E 0px, #C8102E 6px,
+    #FFFFFF 6px, #FFFFFF 12px,
+    #002868 12px, #002868 18px,
+    #FFFFFF 18px, #FFFFFF 24px
+  );
+  animation: barber-pole-scroll 1.2s linear infinite;
+}
+
+.barber-pole.lg::after {
+  left: -60px;
+  width: 120px;
+}
+
+@keyframes barber-pole-scroll {
+  from { background-position: 0 0; }
+  to { background-position: 34px 0; }
 }

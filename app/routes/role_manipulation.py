@@ -15,8 +15,8 @@ def add_employee(userID : int, db :dict = Depends(get_db) , user : dict = Depend
             raise HTTPException(status_code=403 , detail='You are not allowed')
         except IsClient:
             raise HTTPException(status_code=400 , detail='User is client')   
-        except EmployeeHasHistory:
-            raise HTTPException(status_code=400 , detail= 'Employee has live appointments')
+        except ClientHasHistory:
+            raise HTTPException(status_code=400 , detail= 'Client has live appointments')
         except NotFound:
             raise HTTPException(status_code=404 , detail='Employee not found')
         except IsEmployee:

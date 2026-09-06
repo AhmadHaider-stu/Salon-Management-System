@@ -53,5 +53,8 @@ def destroy_service(serviceID:int,db:dict = Depends(get_db)):
         delete_service(session=db, serviceID=serviceID)
     except NotFoundService:
         raise HTTPException(status_code=404, detail="Service not found")
+    except ServiceHasHistory:
+        raise HTTPException(status_code=400, detail="Service has history")
+
     return 'OK'
 

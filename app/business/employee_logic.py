@@ -3,7 +3,10 @@ from app.exceptions.employee import *
 from app.CRUD.employee_service import add_employee_service  , del_service_by_employee
 from app.services.cloudinary_client import upload_photo as cloudinary_upload
 from app.services.phone_validation import is_valid_phone, format_phone
+from PIL import Image
+from io import BytesIO
 
+MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 # HELPER
 def get_or_raise(session, employeeID):
     employee = get_employee(session=session, employeeID=employeeID)
@@ -52,14 +55,27 @@ def update_employee_photo_upload(session, employeeID, file):
         status, employee = get_employee(session=session, employeeID=employeeID)
         if status == 'FAIL':
             raise NotFoundEmployee()
-        photo_url = cloudinary_upload(file.file, folder="employee_photos")
+
+        if not file.content_type or not file.content_type.startswith('image/'):
+            raise InvalidPhotoFile()
+
+        contents = file.file.read()
+
+        if len(contents) > MAX_PHOTO_SIZE_BYTES:
+            raise PhotoTooLarge()
+
+        try:
+            Image.open(BytesIO(contents)).verify()
+        except Exception:
+            raise InvalidPhotoFile()
+
+        photo_url = cloudinary_upload(BytesIO(contents), folder="employee_photos")
         update_employee_photo(session=session, employee=employee, value=photo_url)
         session.commit()
         return photo_url
     except:
         session.rollback()
         raise
-
 
 def alter_employee(session, employeeID, data):
     try:

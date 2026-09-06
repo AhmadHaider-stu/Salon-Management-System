@@ -151,7 +151,7 @@
     row.innerHTML =
       '<div class="service-row-main">' +
         '<div>' +
-          '<div class="service-name">' + service.description + '</div>' +
+          '<div class="service-name">' + escapeHtml(service.description) + '</div>' +
           '<div class="service-meta">' + service.time_duration + ' ' + (window.LANG === 'ar' ? 'دقيقة' : 'min') + ' · ' +
             '<span class="status-badge ' + (service.active ? 'status-active' : 'status-inactive') + '">' +
               (service.active ? t('active_label') : t('inactive_label')) +
@@ -172,7 +172,7 @@
         '</div>' +
         '<div class="field-group">' +
           '<label class="field-label">' + t('description_label') + '</label>' +
-          '<input type="text" class="field-input edit-description" style="font-family: var(--font-body);" value="' + service.description + '" maxlength="30" />' +
+          '<input type="text" class="field-input edit-description" style="font-family: var(--font-body);" value="' + escapeHtml(service.description) + '" maxlength="30" />' +
         '</div>' +
         '<div class="field-group">' +
           '<label class="field-label">' + t('price_label') + ' (' + t('currency') + ')</label>' +

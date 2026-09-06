@@ -46,26 +46,29 @@
 
     var photoHtml = emp.photo
       ? '<img src="' + emp.photo + '" alt="" class="stylist-photo" />'
-      : '<div class="stylist-photo-fallback">' + emp.f_name[0] + '</div>';
+      : '<div class="stylist-photo-fallback">' + escapeHtml(emp.f_name[0]) + '</div>';
 
     var chipsHtml = services.map(function (s) {
-      return '<span class="service-chip">' + s.description + '</span>';
+      return '<span class="service-chip">' + escapeHtml(s.description) + '</span>';
     }).join('');
 
     var contactHtml = '';
     if (emp.phone) {
       contactHtml +=
         '<a href="' + phoneHref(emp.phone) + '" class="stylist-contact-link">' +
-          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>' +
-          emp.phone +
+        '<svg ...></svg>' +
+        escapeHtml(emp.phone) +
         '</a>';
     }
     if (emp.socialMedia) {
-      contactHtml +=
-        '<a href="' + emp.socialMedia + '" target="_blank" rel="noopener" class="stylist-contact-link">' +
-          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>' +
-          'Instagram' +
-        '</a>';
+      var social = safeUrl(emp.socialMedia);  
+        if (social) {
+          contactHtml +=
+            '<a href="' + social + '" target="_blank" rel="noopener" class="stylist-contact-link">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>' +
+            'Instagram' +
+          '</a>';
+            }
     }
 
     var servicesId = 'chips-' + emp.id;
@@ -83,10 +86,10 @@
       '<div class="stylist-card-header">' +
         photoHtml +
         '<div>' +
-          '<div class="stylist-card-name">' + emp.f_name + ' ' + emp.l_name + '</div>' +
-        '</div>' +
-      '</div>' +
-      (emp.bio ? '<div class="stylist-bio">' + emp.bio + '</div>' : '') +
+          '<div class="stylist-card-name">' + escapeHtml(emp.f_name) + ' ' + escapeHtml(emp.l_name) + '</div>' +
+          '</div>' +
+          '</div>' +
+          (emp.bio ? '<div class="stylist-bio">' + escapeHtml(emp.bio) + '</div>' : '') +
       (contactHtml ? '<div class="stylist-contact-row">' + contactHtml + '</div>' : '') +
       servicesHtml;
 

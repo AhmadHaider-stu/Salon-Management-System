@@ -97,8 +97,8 @@
     card.innerHTML =
       '<div class="cal-card-top">' +
       '<div>' +
-      '<div class="cal-card-time">' + u.f_name + ' ' + u.l_name + '</div>' +
-      '<div class="cal-card-sub">' + (u.email || t('no_email')) + '</div>' +
+      '<div class="cal-card-time">' + escapeHtml(u.f_name) + ' ' + escapeHtml(u.l_name) + '</div>' +
+      '<div class="cal-card-sub">' + (u.email ? escapeHtml(u.email) : t('no_email')) + '</div>' +
       '</div>' +
       '<span class="' + roleBadgeClass(role) + '">' + roleLabel(role) + '</span>' +
       '</div>' +
@@ -126,7 +126,7 @@
     if (!data || !data.detail) return t('err_generic_action');
     if (typeof data.detail === 'string') return data.detail;
     if (Array.isArray(data.detail)) {
-      return data.detail.map(function (e) { return e.msg || JSON.stringify(e); }).join(', ');
+      return data.detail.map(function (e) { return escapeHtml(e.msg || JSON.stringify(e)); }).join(', ');
     }
     return t('err_generic_action');
   }

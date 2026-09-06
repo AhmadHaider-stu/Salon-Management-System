@@ -98,6 +98,10 @@ def upload_employee_photo(employeeID: int, file: UploadFile = File(...), db: dic
         return {"photo_url": url}
     except NotFoundEmployee:
         raise HTTPException(status_code=404, detail="Employee not found")
+    except InvalidPhotoFile:
+        raise HTTPException(status_code=400, detail="File must be a valid image")
+    except PhotoTooLarge:
+        raise HTTPException(status_code=400, detail="Image is too large (max 5MB)")
 
 @router.get('/{employeeID}/calendar/day')
 def employee_calendar_day(employeeID: int, date: date_type, db: dict = Depends(get_db), user=Depends(get_current_user)):

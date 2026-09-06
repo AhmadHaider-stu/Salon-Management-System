@@ -55,7 +55,7 @@
         row.innerHTML =
           '<div class="service-row-main">' +
             '<div>' +
-              '<div class="service-name">' + service.description + '</div>' +
+              '<div class="service-name">' + escapeHtml(service.description) + '</div>' +
               '<div class="service-meta">' + service.time_duration + ' ' + (window.LANG === 'ar' ? 'دقيقة' : 'min') + '</div>' +
             '</div>' +
             '<div class="service-price">' + formatPrice(service.price) + '</div>' +

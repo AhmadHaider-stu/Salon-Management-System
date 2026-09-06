@@ -68,12 +68,12 @@
     card.innerHTML =
       '<div class="cal-card-top">' +
         '<div style="display:flex;align-items:center;gap:12px;">' +
-          (emp.photo
-            ? '<img src="' + emp.photo + '" alt="" class="avatar" />'
-            : '<div class="avatar-fallback">' + (emp.f_name ? emp.f_name[0] : '?') + '</div>') +
+           (emp.photo
+            ? '<img src="' + escapeHtml(emp.photo) + '" alt="" class="avatar" />'
+            : '<div class="avatar-fallback">' + escapeHtml(emp.f_name ? emp.f_name[0] : '?') + '</div>') +
           '<div>' +
-            '<div class="cal-card-time">' + emp.f_name + ' ' + emp.l_name + '</div>' +
-            '<div class="cal-card-sub">' + (emp.phone || t('no_phone')) + '</div>' +
+            '<div class="cal-card-time">' + escapeHtml(emp.f_name) + ' ' + escapeHtml(emp.l_name) + '</div>' +
+            '<div class="cal-card-sub">' + (emp.phone ? escapeHtml(emp.phone) : t('no_phone')) + '</div>' +
           '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:10px;">' +
@@ -120,11 +120,11 @@
       '<div class="section-title">' + t('profile_title') + '</div>' +
       '<div class="field-group">' +
         '<label class="field-label">' + t('bio_label') + '</label>' +
-        '<textarea class="field-input emp-bio" style="font-family: var(--font-body); min-height: 70px; resize: vertical;">' + (freshEmp.bio || '') + '</textarea>' +
+        '<textarea class="field-input emp-bio" style="font-family: var(--font-body); min-height: 70px; resize: vertical;">' + escapeHtml(freshEmp.bio || '') + '</textarea>' +
       '</div>' +
       '<div class="field-group">' +
         '<label class="field-label">' + t('social_label') + '</label>' +
-        '<input type="text" class="field-input emp-social" style="font-family: var(--font-body);" value="' + (freshEmp.socialMedia || '') + '" />' +
+        '<input type="text" class="field-input emp-social" style="font-family: var(--font-body);" value="' + escapeHtml(freshEmp.socialMedia || '') + '" />' +
       '</div>' +
       '<div class="field-group" style="display:flex;align-items:center;gap:8px;">' +
         '<input type="checkbox" class="emp-active" id="active-' + emp.id + '" ' + (freshEmp.active ? 'checked' : '') + ' />' +
@@ -135,7 +135,7 @@
       '<div class="section-title" style="margin-top:24px;">' + t('assigned_services_title') + '</div>' +
       '<div class="emp-services-list">' +
         allServices.map(function (s) {
-          return '<label class="checklist-row"><input type="checkbox" class="emp-service-check" value="' + s.id + '" ' + (assignedIds.indexOf(s.id) !== -1 ? 'checked' : '') + ' /> ' + s.description + '</label>';
+          return '<label class="checklist-row"><input type="checkbox" class="emp-service-check" value="' + s.id + '" ' + (assignedIds.indexOf(s.id) !== -1 ? 'checked' : '') + ' /> ' + escapeHtml(s.description) + '</label>';
         }).join('') +
       '</div>' +
       '<button type="button" class="confirm-add-btn emp-save-services-btn">' + t('save_services_btn') + '</button>' +

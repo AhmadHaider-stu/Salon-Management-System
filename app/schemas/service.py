@@ -5,13 +5,13 @@ from typing import Optional
 
 class ServiceCreate(BaseModel):
     category : ServiceCategory
-    description : str = Field(min_length=5 , max_length=30)
+    description : str = Field( max_length=30)
     price : float = Field(ge=10 ,le=500)
     time_duration : int = Field(ge=10,le=180)
 
 class ServiceUpdate(BaseModel):
     category : Optional[ServiceCategory] = None
-    description : Optional[str] = Field(default=None,min_length=5 , max_length=30)
+    description : Optional[str] = Field(default=None, max_length=30)
     price : Optional[float] = Field(default=None,ge=10 ,le=500)
     time_duration : Optional[int] = Field(default=None,ge=10,le=180)
     active : Optional[bool] = None

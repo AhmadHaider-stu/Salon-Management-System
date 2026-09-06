@@ -27,3 +27,10 @@ class EmployeeHasHistory(Exception):
 class InvalidPhoneNumber(Exception):
     def __init__(self):
         super().__init__('Invalid phone number')
+
+
+class InvalidPhotoFile(Exception):
+    pass
+
+class PhotoTooLarge(Exception):
+    pass

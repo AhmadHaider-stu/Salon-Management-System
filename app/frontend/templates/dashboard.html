@@ -110,13 +110,13 @@
   async function loadClientMap() {
     var res = await fetch('/client');
     var clients = await res.json();
-    clients.forEach(function (c) { clientMap[c.id] = c.f_name + ' ' + c.l_name; });
+    clients.forEach(function (c) { clientMap[c.id] = escapeHtml(c.f_name) + ' ' + escapeHtml(c.l_name); });
   }
 
   async function loadServiceMap() {
     var res = await fetch('/service/all');
     var services = await res.json();
-    services.forEach(function (s) { serviceMap[s.id] = s.description; });
+    services.forEach(function (s) { serviceMap[s.id] = escapeHtml(s.description); });
   }
 
   async function resolveEmployeeName(serviceId, employeeId) {
@@ -125,7 +125,7 @@
       employeeCache[serviceId] = await res.json();
     }
     var match = employeeCache[serviceId].find(function (e) { return e.id === employeeId; });
-    return match ? (match.f_name + ' ' + match.l_name) : t('barber_fallback');
+    return match ? (escapeHtml(match.f_name) + ' ' + escapeHtml(match.l_name)) : t('barber_fallback');
   }
 
   async function loadDashAppointments() {
@@ -154,8 +154,8 @@
     card.innerHTML =
       '<div class="cal-card-top">' +
         '<div>' +
-          '<div class="cal-card-time">' + formatTime(a.start_time) + ' – ' + formatTime(a.end_time) + '</div>' +
-          '<div class="cal-card-sub">' + clientName + (a.phone ? ' · ' + a.phone : '') + '</div>' +
+          '<div class="cal-card-time">' + formatTime(a.start_time) + '</div>' +
+          '<div class="cal-card-sub">' + clientName + (a.phone ? ' · ' + escapeHtml(a.phone) : '') + '</div>' +
         '</div>' +
         '<div style="display:flex;align-items:center;gap:10px;">' +
           '<span class="' + statusBadgeClass(a.status) + '">' + statusLabel(a.status) + '</span>' +
@@ -210,12 +210,12 @@
 
     list.innerHTML = stylists.map(function (s) {
       var avatar = s.photo
-        ? '<img src="' + s.photo + '" alt="" class="avatar" />'
-        : '<div class="avatar-fallback">' + s.name[0] + '</div>';
+        ? '<img src="' + escapeHtml(s.photo) + '" alt="" class="avatar" />'
+        : '<div class="avatar-fallback">' + escapeHtml(s.name[0]) + '</div>';
       return (
         '<div class="stylist-row">' +
           avatar +
-          '<div class="stylist-name">' + s.name + '</div>' +
+          '<div class="stylist-name">' + escapeHtml(s.name) + '</div>' +
           '<div class="stylist-count">' + s.appointments_today + t('today_suffix') + '</div>' +
         '</div>'
       );

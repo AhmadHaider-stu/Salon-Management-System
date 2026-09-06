@@ -23,7 +23,13 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
-  }
+    }
+    function safeUrl(url) {
+      if (!url) return '';
+      var trimmed = String(url).trim();
+      if (/^https?:\/\//i.test(trimmed)) return escapeHtml(trimmed);
+      return '';    
+    }
   </script>
 
   {% from "_icons.html" import icon %}

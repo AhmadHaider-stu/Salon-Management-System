@@ -110,7 +110,8 @@
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   }
   function formatTime(iso) {
-    return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    var locale = window.LANG === 'ar' ? 'ar-u-nu-latn' : 'en-US';
+    return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
   }
   function formatPrice(value) {
     var amount = Number(value).toFixed(0);
@@ -358,7 +359,7 @@
       card.innerHTML =
         '<div class="cal-card-top">' +
           '<div>' +
-            '<div class="cal-card-time">' + formatTime(a.start_time) + ' – ' + formatTime(a.end_time) + '</div>' +
+            '<div class="cal-card-time">' + formatTime(a.start_time) + '</div>' +
             '<div class="cal-card-sub">' + clientName + (a.phone ? ' · ' + escapeHtml(a.phone) : '') + '</div>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:10px;" class="status-cell"></div>' +
@@ -384,7 +385,7 @@
       card.innerHTML =
         '<div class="cal-card-top">' +
           '<div>' +
-            '<div class="cal-card-time">' + formatTime(s.start_time) + ' – ' + formatTime(s.end_time) + '</div>' +
+            '<div class="cal-card-time">' + formatTime(s.start_time) + '</div>' +
             '<div class="cal-card-sub">' + clientName + ' · ' + (serviceMap[s.service_id] || t('service_fallback')) + '</div>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:10px;" class="status-cell"></div>' +
@@ -686,18 +687,18 @@
 
   document.getElementById('calDate').value = todayStr();
 
-  (async function init() {
-    await loadServiceMap();
-    await loadClientMap();
-    await loadEmployeeOptions();
+    (async function init() {
+      try { await loadServiceMap(); } catch (e) { console.error(e); }
+      try { await loadClientMap(); } catch (e) { console.error(e); }
+      try { await loadEmployeeOptions(); } catch (e) { console.error(e); }
 
-    var params = new URLSearchParams(window.location.search);
-    var preselect = params.get('employee');
-    if (isStaff && preselect) {
-      document.getElementById('employeeSelect').value = preselect;
-    }
+      var params = new URLSearchParams(window.location.search);
+      var preselect = params.get('employee');
+      if (isStaff && preselect) {
+        document.getElementById('employeeSelect').value = preselect;
+      }
 
-    refresh();
+      refresh();
   })();
 </script>
 {% endblock %}
