@@ -44,7 +44,7 @@ if _bootstrap_email:
     try:
         status, user = get_user_by_email(session=_bootstrap_db, email=_bootstrap_email)
         if status == 'OK' and user.role != Role.ADMIN:
-            user.role = Role.ADMIN
+            user.role = Role.ADMIN  
             _bootstrap_db.commit()
             make_employee(session=_bootstrap_db, current_user=user, userID=user.id)
             user.role = Role.ADMIN
