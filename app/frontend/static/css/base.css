@@ -1860,14 +1860,14 @@ img {
   -webkit-user-drag: none;
   -moz-user-drag: none;
 }
-
 .phone-input-row {
   display: flex;
   align-items: center;
+  direction: ltr;
   border-radius: var(--radius-sm);
   border: 1px solid var(--line);
   background: var(--paper);
-  padding-left: 14px;
+  overflow: hidden;
   transition: border-color 0.15s ease;
 }
 
@@ -1876,6 +1876,9 @@ img {
 }
 
 .phone-prefix {
+  padding: 13px 12px;
+  background: var(--line);
+  border-right: 1px solid var(--line);
   font-family: var(--font-mono);
   font-size: 16px;
   color: var(--ink-soft);
@@ -1886,7 +1889,7 @@ img {
 .phone-input-row .phone-input-local {
   border: none;
   background: transparent;
-  padding-left: 6px;
+  padding-left: 12px;
 }
 
 .phone-input-row .phone-input-local:focus {
