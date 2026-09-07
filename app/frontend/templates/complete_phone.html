@@ -34,15 +34,15 @@
       <form method="post" action="/login/complete-phone" id="phoneForm">
         <div class="field-group">
           <label class="field-label" for="phoneLocal">{{ t(request, 'phone_number_label') }}</label>
-          <div class="phone-input-row">
-            <span class="phone-prefix-abs">+962</span>
+          <div class="phone-field-table">
+            <span class="phone-prefix-cell">+962</span>
             <input
               type="tel"
               id="phoneLocal"
               inputmode="numeric"
               pattern="[0-9]*"
               placeholder="795280290"
-              class="field-input phone-input-local"
+              class="phone-input-cell"
               required
               autofocus
             />
