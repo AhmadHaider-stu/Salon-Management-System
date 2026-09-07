@@ -469,6 +469,7 @@ body {
   -webkit-user-select: none;
   -webkit-user-drag: none;
   -moz-user-drag: none;
+  -webkit-touch-callout: none;
 }
 
 .about-line {
@@ -1859,6 +1860,7 @@ img {
   -webkit-user-select: none;
   -webkit-user-drag: none;
   -moz-user-drag: none;
+  -webkit-touch-callout: none;
 }
 .phone-input-row {
   display: flex;
