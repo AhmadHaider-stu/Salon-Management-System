@@ -1864,14 +1864,18 @@ img {
 .phone-input-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  padding-left: 14px;
+  transition: border-color 0.15s ease;
+}
+
+.phone-input-row:focus-within {
+  border-color: var(--brass);
 }
 
 .phone-prefix {
-  padding: 13px 12px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--line);
-  background: var(--line);
   font-family: var(--font-mono);
   font-size: 16px;
   color: var(--ink-soft);
@@ -1879,7 +1883,12 @@ img {
   user-select: none;
 }
 
-.phone-input-local {
-  flex: 1;
+.phone-input-row .phone-input-local {
+  border: none;
+  background: transparent;
+  padding-left: 6px;
 }
 
+.phone-input-row .phone-input-local:focus {
+  outline: none;
+}
