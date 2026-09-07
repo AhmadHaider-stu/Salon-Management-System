@@ -29,6 +29,36 @@ from app.database import Base, engine
 import app.models
 
 Base.metadata.create_all(engine)
+from app.database import Base, engine
+import app.models
+
+Base.metadata.create_all(engine)
+
+
+_bootstrap_email = os.getenv('ADMIN_BOOTSTRAP_EMAIL')
+if _bootstrap_email:
+    from app.CRUD.user import get_user_by_email
+    from app.business.role_logic import make_employee, make_admin
+    from app.enums.enum import Role
+    _bootstrap_db = SessionLocal()
+    try:
+        status, user = get_user_by_email(session=_bootstrap_db, email=_bootstrap_email)
+        if status == 'OK' and user.role != Role.ADMIN:
+            user.role = Role.ADMIN
+            _bootstrap_db.commit()
+            make_employee(session=_bootstrap_db, current_user=user, userID=user.id)
+            user.role = Role.ADMIN
+            _bootstrap_db.commit()
+            make_admin(session=_bootstrap_db, current_user=user, userID=user.id)
+            _bootstrap_db.commit()
+            print(f"Bootstrapped admin: {_bootstrap_email}")
+        elif status == 'FAIL':
+            print(f"ADMIN_BOOTSTRAP_EMAIL set but no user found yet with email {_bootstrap_email}")
+    except Exception as e:
+        _bootstrap_db.rollback()
+        print(f"Admin bootstrap failed: {e}")
+    finally:
+        _bootstrap_db.close()
 
 
 app = FastAPI(
