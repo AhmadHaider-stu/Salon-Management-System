@@ -13,8 +13,6 @@ def get_db():
 
 async def get_google_user(request: Request):
     user_id = request.session.get('user_id')
-    if not user_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
     return user_id
 
 async def get_current_user(userID: int = Depends(get_google_user), db: dict = Depends(get_db)):
