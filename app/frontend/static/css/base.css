@@ -191,43 +191,33 @@ body {
   margin-top: 6px;
 }
 
-.phone-field-table {
-  display: table;
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+.phone-field-wrap {
+  position: relative;
   direction: ltr;
 }
 
-.phone-prefix-cell {
-  display: table-cell;
-  width: 1%;
-  white-space: nowrap;
-  padding: 13px 12px;
+.phone-prefix-abs {
+  position: absolute;
+  left: 1px;
+  top: 1px;
+  bottom: 1px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
   background: var(--line);
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
   font-family: var(--font-mono);
   font-size: 16px;
   color: var(--ink-soft);
-  vertical-align: middle;
+  pointer-events: none;
   user-select: none;
 }
 
-.phone-input-cell {
-  display: table-cell;
-  width: 100%;
-  padding: 13px 14px;
-  border: none;
-  background: var(--paper);
-  font-family: var(--font-mono);
-  font-size: 16px;
-  color: var(--ink);
-  vertical-align: middle;
+.phone-field-wrap .phone-input-local {
+  padding-left: 62px;
+  direction: ltr;
 }
 
-.phone-input-cell:focus {
-  outline: none;
-}
 .error-banner {
   background: #FBEAF0;
   color: #72243E;
