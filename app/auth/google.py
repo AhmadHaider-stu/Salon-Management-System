@@ -9,7 +9,7 @@ oauth.register(
     client_secret = CLIENT_SECRET,
     client_kwargs={
         'scope' : 'email openid profile',
-        'redirect_uri':'https://salon-project.fastapicloud.dev/login/auth'
+        'redirect_uri':'https://salon-project-ce592663.fastapicloud.dev/login/auth'
     }
 )
 
