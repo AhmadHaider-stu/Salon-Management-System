@@ -238,10 +238,21 @@ STRINGS.update({
 STRINGS.update({
     "sign_in_title": {"ar": "تسجيل الدخول", "en": "Sign in"},
     "err_blocked": {"ar": "تم حظر حسابك. تواصل مع الصالون للمساعدة.", "en": "Your account has been blocked. Contact the salon for help."},
-    "err_signin_generic": {"ar": "حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.", "en": "Something went wrong signing you in. Try again."},
-    "welcome_headline": {"ar": "أهلاً بك", "en": "Welcome"},
-    "signin_body": {"ar": "سجّل الدخول لحجز موعد أو إدارة زياراتك.", "en": "Sign in to book an appointment or manage your visits."},
+    "err_signin_generic": {"ar": "حدث خطا اثناء تسجيل الدخول. حاول مرة اخرى.", "en": "Something went wrong signing you in. Try again."},
+    "welcome_headline": {"ar": "اهلاً وسهلاً", "en": "Welcome"},
+    "signin_body": {"ar": "سجل الدخول لحجز موعد او ادارة زياراتك.", "en": "Sign in to book an appointment or manage your visits."},
     "continue_google": {"ar": "المتابعة باستخدام جوجل", "en": "Continue with Google"},
+})
+
+STRINGS.update({
+    "one_last_step": {"ar": "خطوة اخيرة", "en": "One last step"},
+    "complete_phone_body": {"ar": "اضف رقم هاتفك حتى يتمكن الصالون من التواصل معك بخصوص حجوزاتك.", "en": "Add your phone number so the salon can reach you about your bookings."},
+    "phone_number_label": {"ar": "رقم الهاتف", "en": "Phone number"},
+    "phone_hint": {"ar": "تُستخدم فقط لتحديثات الحجوزات.", "en": "Used only for appointment updates."},
+    "continue_btn": {"ar": "متابعة", "en": "Continue"},
+    "err_invalid_phone": {"ar": "هذا لا يبدو رقم هاتف صحيح. تحقق من الأرقام وحاول مرة أخرى.", "en": "That doesn't look like a valid phone number. Check the digits and try again."},
+    "err_phone_taken": {"ar": "رقم الهاتف هذا مرتبط بحساب آخر بالفعل.", "en": "That phone number is already linked to another account."},
+    "err_generic_retry": {"ar": "حدث خطأ ما. حاول مرة أخرى.", "en": "Something went wrong. Try again."},
 })
 
 def t(request, key):

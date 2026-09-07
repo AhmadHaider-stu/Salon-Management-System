@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ request.session.get('lang', 'ar') }}" dir="{{ 'rtl' if request.session.get('lang', 'ar') == 'ar' else 'ltr' }}" translate="no">
 
 <head>
-  <title>Add your phone number</title>
+  <title>{{ t(request, 'sign_in_title') }}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="google" content="notranslate" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/base.css') }}" />
 </head>
 
@@ -18,38 +19,48 @@
       {% if error %}
       <div class="error-banner">
         {% if error == "invalid_phone" %}
-          That doesn't look like a valid phone number. Check the digits and try again.
+          {{ t(request, 'err_invalid_phone') }}
         {% elif error == "phone_taken" %}
-          That phone number is already linked to another account.
+          {{ t(request, 'err_phone_taken') }}
         {% else %}
-          Something went wrong. Try again.
+          {{ t(request, 'err_generic_retry') }}
         {% endif %}
       </div>
       {% endif %}
 
-      <div class="auth-headline">One last step</div>
-      <div class="auth-body">Add your phone number so the salon can reach you about your bookings.</div>
+      <div class="auth-headline">{{ t(request, 'one_last_step') }}</div>
+      <div class="auth-body">{{ t(request, 'complete_phone_body') }}</div>
 
-      <form method="post" action="/login/complete-phone">
+      <form method="post" action="/login/complete-phone" id="phoneForm">
         <div class="field-group">
-          <label class="field-label" for="phone">Phone number</label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            inputmode="numeric"
-            pattern="[0-9+]*"
-            placeholder="+962795280290"
-            class="field-input"
-            required
-            autofocus
-          />
-          <div class="field-hint">Used only for appointment updates.</div>
+          <label class="field-label" for="phoneLocal">{{ t(request, 'phone_number_label') }}</label>
+          <div class="phone-input-row">
+            <span class="phone-prefix">+962</span>
+            <input
+              type="tel"
+              id="phoneLocal"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              placeholder="795280290"
+              class="field-input phone-input-local"
+              required
+              autofocus
+            />
+          </div>
+          <input type="hidden" name="phone" id="phoneHidden" />
+          <div class="field-hint">{{ t(request, 'phone_hint') }}</div>
         </div>
-        <button type="submit" class="btn btn-primary">Continue</button>
+        <button type="submit" class="btn btn-primary">{{ t(request, 'continue_btn') }}</button>
       </form>
     </div>
   </div>
+
+  <script>
+    document.getElementById('phoneForm').addEventListener('submit', function () {
+      var local = document.getElementById('phoneLocal').value.trim();
+      document.getElementById('phoneHidden').value = '+962' + local;
+    });
+  </script>
 </body>
 
 </html>
