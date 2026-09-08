@@ -47,7 +47,10 @@
     </div>
     <div class="field-group">
       <label class="field-label" for="phoneField" id="phoneLabel"></label>
-      <input type="tel" id="phoneField" class="field-input" inputmode="numeric" pattern="[0-9+]*" style="font-family: var(--font-body);" />
+      <div class="phone-input-row">
+        <span class="phone-prefix">+962</span>
+        <input type="tel" id="phoneField" class="phone-input-local" inputmode="numeric" pattern="[0-9]*" />
+      </div>
     </div>
   </div>
 
@@ -76,6 +79,11 @@
 
 <script>
   var currentEmployeeId = null;
+
+  function stripCountryCode(phone) {
+    if (!phone) return '';
+    return phone.indexOf('+962') === 0 ? phone.slice(4) : phone;
+  }
 
   document.getElementById('uploadBtn').textContent = t('change_photo');
   document.getElementById('firstNameLabel').textContent = t('first_name');
@@ -120,7 +128,7 @@
     document.getElementById('fNameField').value = user.f_name || '';
     document.getElementById('lNameField').value = user.l_name || '';
     document.getElementById('emailField').value = user.email || '';
-    document.getElementById('phoneField').value = user.phone || '';
+    document.getElementById('phoneField').value = stripCountryCode(user.phone);
 
     var initials = ((user.f_name || ' ')[0] + (user.l_name || ' ')[0]).toUpperCase();
 
@@ -161,11 +169,11 @@
     var phoneRes = await fetch('/user/update-phone', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: document.getElementById('phoneField').value })
+      body: JSON.stringify({ phone: '+962' + document.getElementById('phoneField').value })
     });
     if (phoneRes.ok) {
       var updated = await phoneRes.json();
-      document.getElementById('phoneField').value = updated.phone;
+      document.getElementById('phoneField').value = stripCountryCode(updated.phone);
     } else {
       var phoneErr = await phoneRes.json();
       errors.push(t('err_phone_prefix') + ': ' + (phoneErr.detail || t('err_could_not_save')));
