@@ -14,13 +14,13 @@ def del_appointment_service (session ,appointment_serviceID):
     session.delete(appointment)
 
 def del_appointment_by_employee(session , employeeID):
-    appointments = session.query(AppointmentService).filter(AppointmentService.employee_id == employeeID , AppointmentService.status == AppointmentStatus.PENDING).all()
+    appointments = session.query(AppointmentService).filter(AppointmentService.employee_id == employeeID).all()
     for row in appointments:
         session.delete(row)
     session.flush()
 
 def del_appointment_by_service(session , serviceID):
-    appointments = session.query(AppointmentService).filter(AppointmentService.service_id == serviceID , AppointmentService.status == AppointmentStatus.PENDING).all()
+    appointments = session.query(AppointmentService).filter(AppointmentService.service_id == serviceID ).all()
     for row in appointments:
         session.delete(row)
     session.flush()
