@@ -1449,18 +1449,22 @@ body {
 
 .stylist-contact-row {
   display: flex;
-  gap: 18px;
+  flex-direction: column;
+  gap: 8px;
   margin-top: 14px;
-  flex-wrap: wrap;
 }
 
 .stylist-contact-link {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 13px;
   color: var(--ink);
   text-decoration: none;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
 }
 
 .stylist-contact-link svg {
