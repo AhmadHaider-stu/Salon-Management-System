@@ -53,15 +53,17 @@ def add_receptionist(userID : int, db :dict = Depends(get_db) , user : dict = De
             raise HTTPException(status_code=404 , detail='Employee not found')
 
 @router.delete('/delete_receptionist/{userID}' , dependencies=[Depends(require_admin)],summary='Delete receptionist' )
-def destroy_receptionist(userID : int, db :dict = Depends(get_db) , user : dict = Depends(get_current_user)):
+def destroy_receptionist(userID: int, db: dict = Depends(get_db), user: dict = Depends(get_current_user)):
         try:    
-            return delete_receptionist(session=db ,current_user=user ,userID=userID)
+            return delete_receptionist(session=db, current_user=user, userID=userID)
         except IsNotAdmin:
-            raise HTTPException(status_code=403 , detail='You are not allowed')
+            raise HTTPException(status_code=403, detail='You are not allowed')
         except IsClient:
-            raise HTTPException(status_code=400 , detail='User is client')   
+            raise HTTPException(status_code=400, detail='User is client')   
+        except EmployeeHasHistory:
+            raise HTTPException(status_code=400, detail='Employee has live appointments')
         except NotFound:
-            raise HTTPException(status_code=404 , detail='Employee not found')
+            raise HTTPException(status_code=404, detail='Employee not found')
 
 @router.put('/make_admin/{userID}' , dependencies=[Depends(require_admin)],summary='Add new admin' )
 def add_admin(userID : int, db :dict = Depends(get_db) , user : dict = Depends(get_current_user)):
@@ -75,12 +77,14 @@ def add_admin(userID : int, db :dict = Depends(get_db) , user : dict = Depends(g
             raise HTTPException(status_code=404 , detail='Employee not found')
 
 @router.delete('/delete_admin/{userID}' , dependencies=[Depends(require_admin)],summary='Delete admin' )
-def destroy_admin(userID : int, db :dict = Depends(get_db) , user : dict = Depends(get_current_user)):
+def destroy_admin(userID: int, db: dict = Depends(get_db), user: dict = Depends(get_current_user)):
         try:    
-            return delete_admin(session=db ,current_user=user ,userID=userID)
+            return delete_admin(session=db, current_user=user, userID=userID)
         except IsNotAdmin:
-            raise HTTPException(status_code=403 , detail='You are not allowed')
+            raise HTTPException(status_code=403, detail='You are not allowed')
         except IsClient:
-            raise HTTPException(status_code=400 , detail='User is client')   
+            raise HTTPException(status_code=400, detail='User is client')   
+        except EmployeeHasHistory:
+            raise HTTPException(status_code=400, detail='Employee has live appointments')
         except NotFound:
-            raise HTTPException(status_code=404 , detail='Employee not found')
+            raise HTTPException(status_code=404, detail='Employee not found')
