@@ -296,7 +296,7 @@
     });
   }
 
-  async function loadServicesIntoDetail(appointmentId, detail) {
+async function loadServicesIntoDetail(appointmentId, detail) {
     var container = detail.querySelector('.detail-services');
     container.innerHTML = '<div class="cal-card-sub">' + t('loading') + '</div>';
 
@@ -319,6 +319,11 @@
           '</div>' +
         '</div>';
     }
+
+    if (data.appointment && data.appointment.note) {
+      html += '<div class="appt-note">"' + escapeHtml(data.appointment.note) + '"</div>';
+    }
+
     container.innerHTML = html;
 
     container.querySelectorAll('input').forEach(function (input) {
@@ -343,7 +348,7 @@
     });
 
     return data.services;
-  }
+}
 
   function renderSalonWideDay(appointments) {
     var body = document.getElementById('calendarBody');
