@@ -153,44 +153,56 @@
     clearError();
     var errors = [];
 
-    var nameRes = await fetch('/user/rename', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        f_name: document.getElementById('fNameField').value,
-        l_name: document.getElementById('lNameField').value
-      })
-    });
-    if (!nameRes.ok) {
-      var nameErr = await nameRes.json();
-      errors.push(t('err_name_prefix') + ': ' + (nameErr.detail || t('err_could_not_save')));
+    try {
+      var nameRes = await fetch('/user/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          f_name: document.getElementById('fNameField').value,
+          l_name: document.getElementById('lNameField').value
+        })
+      });
+      if (!nameRes.ok) {
+        var nameErr = await nameRes.json();
+        errors.push(t('err_name_prefix') + ': ' + (nameErr.detail || t('err_could_not_save')));
+      }
+    } catch (e) {
+      errors.push(t('err_name_prefix') + ': ' + t('err_could_not_save'));
     }
 
-    var phoneRes = await fetch('/user/update-phone', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: '+962' + document.getElementById('phoneField').value })
-    });
-    if (phoneRes.ok) {
-      var updated = await phoneRes.json();
-      document.getElementById('phoneField').value = stripCountryCode(updated.phone);
-    } else {
-      var phoneErr = await phoneRes.json();
-      errors.push(t('err_phone_prefix') + ': ' + (phoneErr.detail || t('err_could_not_save')));
+    try {
+      var phoneRes = await fetch('/user/update-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: '+962' + document.getElementById('phoneField').value })
+      });
+      if (phoneRes.ok) {
+        var updated = await phoneRes.json();
+        document.getElementById('phoneField').value = stripCountryCode(updated.phone);
+      } else {
+        var phoneErr = await phoneRes.json();
+        errors.push(t('err_phone_prefix') + ': ' + (phoneErr.detail || t('err_could_not_save')));
+      }
+    } catch (e) {
+      errors.push(t('err_phone_prefix') + ': ' + t('err_could_not_save'));
     }
 
     if (currentEmployeeId) {
-      var profileRes = await fetch('/employee/' + currentEmployeeId, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bio: document.getElementById('bioField').value || null,
-          socialMedia: document.getElementById('socialField').value || null
-        })
-      });
-      if (!profileRes.ok) {
-        var profileErr = await profileRes.json();
-        errors.push(t('err_profile_prefix') + ': ' + (profileErr.detail || t('err_could_not_save')));
+      try {
+        var profileRes = await fetch('/employee/' + currentEmployeeId, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bio: document.getElementById('bioField').value || null,
+            socialMedia: document.getElementById('socialField').value || null
+          })
+        });
+        if (!profileRes.ok) {
+          var profileErr = await profileRes.json();
+          errors.push(t('err_profile_prefix') + ': ' + (profileErr.detail || t('err_could_not_save')));
+        }
+      } catch (e) {
+        errors.push(t('err_profile_prefix') + ': ' + t('err_could_not_save'));
       }
     }
 
@@ -199,7 +211,7 @@
     } else {
       showError(errors.join(' · '));
     }
-  });
+});
 
   document.getElementById('uploadBtn').addEventListener('click', function () {
     document.getElementById('photoInput').click();

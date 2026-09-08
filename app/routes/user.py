@@ -20,7 +20,6 @@ def me(db:dict = Depends(get_db) , userID :int =Depends(get_google_user)):
 @router.post('/rename' )
 def rename(data:RenameUserRequest,db:dict = Depends(get_db),userID : int = Depends(get_google_user)):
     rename_user(session=db , userID=userID,f_name=data.f_name,l_name = data.l_name)
-    return RedirectResponse("")
 
 @router.get('/all' , dependencies=[Depends(require_receptionist_or_admin)],summary='Get all users')
 def all_users(db:dict = Depends(get_db)):
