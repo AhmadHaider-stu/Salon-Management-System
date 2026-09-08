@@ -155,9 +155,10 @@ def delete_admin(session, current_user, userID):
         email = employee.email
         del_employee(session=session, employee=employee)
         user.employee_id = None
-        client = register_client(session=session, f_name=user.f_name, l_name=user.l_name, email=email, phone=user.phone)
+        if user.client_id is None:
+            client = register_client(session=session, f_name=user.f_name, l_name=user.l_name, email=user.email, phone=user.phone)
+            user.client_id = client.id
         user.role = Role.CLIENT
-        user.client_id = client.id
         session.commit()
         return user
     except:
@@ -203,9 +204,10 @@ def delete_receptionist(session, current_user, userID):
         email = employee.email
         del_employee(session=session, employee=employee)
         user.employee_id = None
-        client = register_client(session=session, f_name=user.f_name, l_name=user.l_name, email=email, phone=user.phone)
+        if user.client_id is None:
+            client = register_client(session=session, f_name=user.f_name, l_name=user.l_name, email=user.email, phone=user.phone)
+            user.client_id = client.id
         user.role = Role.CLIENT
-        user.client_id = client.id
         session.commit()
         return user
     except:
