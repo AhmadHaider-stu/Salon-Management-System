@@ -134,7 +134,7 @@ def make_admin(session, current_user, userID):
         session.rollback()
         raise
 
-def delete_admin(session ,current_user, userID):
+def delete_admin(session, current_user, userID):
     try:
         check_admin(current_user)
         user = get_user_or_raise(session=session, userID=userID)
@@ -142,10 +142,22 @@ def delete_admin(session ,current_user, userID):
             raise IsClient()
         user = user[1]
         employee = get_employee(session=session, employeeID=user.employee_id)[1]
+
+        active_appointments = session.query(AppointmentService).filter(
+            AppointmentService.employee_id == employee.id,
+            AppointmentService.status.in_([AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED])
+        ).first()
+        if active_appointments is not None:
+            raise EmployeeHasHistory()
+
+        del_service_by_employee(session=session, employeeID=employee.id)
+        del_appointment_by_employee(session=session, employeeID=employee.id)
+        email = employee.email
         del_employee(session=session, employee=employee)
-        
         user.employee_id = None
+        client = register_client(session=session, f_name=user.f_name, l_name=user.l_name, email=email, phone=user.phone)
         user.role = Role.CLIENT
+        user.client_id = client.id
         session.commit()
         return user
     except:
@@ -178,10 +190,22 @@ def delete_receptionist(session, current_user, userID):
             raise IsClient()
         user = user[1]
         employee = get_employee(session=session, employeeID=user.employee_id)[1]
-        del_employee(session=session, employee=employee)
 
+        active_appointments = session.query(AppointmentService).filter(
+            AppointmentService.employee_id == employee.id,
+            AppointmentService.status.in_([AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED])
+        ).first()
+        if active_appointments is not None:
+            raise EmployeeHasHistory()
+
+        del_service_by_employee(session=session, employeeID=employee.id)
+        del_appointment_by_employee(session=session, employeeID=employee.id)
+        email = employee.email
+        del_employee(session=session, employee=employee)
         user.employee_id = None
+        client = register_client(session=session, f_name=user.f_name, l_name=user.l_name, email=email, phone=user.phone)
         user.role = Role.CLIENT
+        user.client_id = client.id
         session.commit()
         return user
     except:
