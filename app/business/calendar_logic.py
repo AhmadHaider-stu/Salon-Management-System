@@ -12,7 +12,7 @@ def get_employee_calendar_day(session, employeeID, date, viewer):
     day_end = datetime.combine(date, time.max)
     include_cancelled = viewer.role in (Role.ADMIN, Role.RECEPTION)
 
-    query = session.query(AppointmentService, Client.f_name, Client.l_name).join(
+    query = session.query(AppointmentService, Appointment, Client.f_name, Client.l_name).join(
         Appointment, AppointmentService.appointment_id == Appointment.id
     ).join(
         Client, Appointment.client_id == Client.id
@@ -27,7 +27,7 @@ def get_employee_calendar_day(session, employeeID, date, viewer):
     results = query.order_by(AppointmentService.start_time).all()
 
     output = []
-    for service, f_name, l_name in results:
+    for service, appointment, f_name, l_name in results:
         output.append({
             "id": service.id,
             "appointment_id": service.appointment_id,
@@ -39,6 +39,7 @@ def get_employee_calendar_day(session, employeeID, date, viewer):
             "status": service.status,
             "reminder": service.reminder,
             "client_name": f"{f_name} {l_name}",
+            "note": appointment.note,
         })
     return output
 

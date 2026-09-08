@@ -567,7 +567,7 @@ body {
 }
 
 .app-body {
-  padding-top: 0px;
+  padding-top: 80px;
 }
 
 .app-nav {
@@ -587,6 +587,7 @@ body {
 .nav-items-scroll {
   display: flex;
   flex: 1 1 auto;
+  justify-content: center;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-snap-type: x proximity;

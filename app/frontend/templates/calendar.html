@@ -391,8 +391,7 @@ async function loadServicesIntoDetail(appointmentId, detail) {
         '<div class="cal-card-top">' +
           '<div>' +
             '<div class="cal-card-time">' + formatTime(s.start_time) + '</div>' +
-            '<div class="cal-card-sub">' + clientName + ' · ' + (serviceMap[s.service_id] || t('service_fallback')) + '</div>' +
-          '</div>' +
+            '<div class="cal-card-sub">' + clientName + ' · ' + (serviceMap[s.service_id] || t('service_fallback')) + (s.note ? '<br>"' + escapeHtml(s.note) + '"' : '') + '</div>' +          '</div>' +
           '<div style="display:flex;align-items:center;gap:10px;" class="status-cell"></div>' +
         '</div>' +
         '<div class="cal-card-price" style="margin-top:6px;">' + formatPrice(s.price) + '</div>';
