@@ -4,10 +4,10 @@ STRINGS = {
     "new_appointment": {"ar": "موعد جديد", "en": "New appointment"},
     "my_visits": {"ar": "زياراتي", "en": "My visits"},
     "view_bookings": {"ar": "عرض الحجوزات", "en": "View bookings"},
-    "owner_caption": {"ar": "صاحب الصالون، السيد ايمن مطر", "en": "Our owner, his art"},
+    "owner_caption": {"ar": "صاحب الصالون", "en": "Our owner, his art"},
     "about_salon": {
-        "ar": "صالون أيمن مطر بإدارة الحلاق ايمن مطر، مع فريق حلاقين ذوي خبرة.",
-        "en": "Ayman Matar Salon is owned by a professional barber, with an experienced team of barbers.",
+        "ar": "صالون بإدارة الحلاق ...، مع فريق حلاقين ذوي خبرة.",
+        "en": " Salon is owned by a professional barber, with an experienced team of barbers.",
     },
     "gallery": {"ar": "المعرض", "en": "Gallery"},
     "hair_styling": {"ar": "قص وتصفيف الشعر", "en": "Hair styling"},
@@ -63,9 +63,9 @@ STRINGS.update({
 CATEGORY_LABELS = {
     "hair styling": {"ar": "قص وتصفيف الشعر", "en": "Hair styling"},
     "facial treatment": {"ar": "عناية بالوجه", "en": "Facial treatment"},
-    # "nails": {"ar": "أظافر", "en": "Nails"},
-    # "makeup": {"ar": "مكياج", "en": "Makeup"},
-    # "Threading and waxing": {"ar": "إزالة الشعر", "en": "Threading and waxing"},
+    "nails": {"ar": "أظافر", "en": "Nails"},
+    "makeup": {"ar": "مكياج", "en": "Makeup"},
+    "Threading and waxing": {"ar": "إزالة الشعر", "en": "Threading and waxing"},
 }
 
 STRINGS["our_work"] = {"ar": "لمساتنا", "en": "Our Work"}

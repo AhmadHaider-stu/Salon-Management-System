@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Services · Ayman Matar Salon{% endblock %}
+{% block title %}Services · Salon-Management-System{% endblock %}
 
 {% block content %}
 {% set lang = request.session.get('lang', 'ar') %}
@@ -48,7 +48,7 @@
   // Which categories can be picked when creating a NEW service. Existing services in
   // other categories (nails, makeup, waxing) still display and can be edited fine —
   // this only controls what's offered going forward.
-  var VISIBLE_CATEGORY_VALUES = ['hair styling', 'facial treatment'];
+  var VISIBLE_CATEGORY_VALUES = ['hair styling', 'facial treatment','Threading and waxing','makeup','nails'];
 
   function categoryLabel(value) {
     var entry = window.CATEGORY_LABELS[value];
