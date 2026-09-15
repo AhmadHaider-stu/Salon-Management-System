@@ -9,7 +9,7 @@ oauth.register(
     client_secret = CLIENT_SECRET,
     client_kwargs={
         'scope' : 'email openid profile',
-        'redirect_uri':'https://aymanmatarsalon-production.up.railway.app/login/auth'
+        'redirect_uri':'example/login/auth'
     }
 )
 
